@@ -78,6 +78,11 @@ func (i image) shrink(percent int, imageDir string, thumbsDir string) error {
 
 	log.Printf("Shrinking %s to %d%%...", i.filename, percent)
 
+	_, err = os.Stat(origFilename)
+	if err != nil {
+		return fmt.Errorf("Stat failure: %s: %s", i.filename, err.Error())
+	}
+
 	cmd := exec.Command("convert", "-resize", fmt.Sprintf("%d%%", percent), origFilename, newFilename)
 
 	err = cmd.Run()
@@ -353,7 +358,8 @@ func generateHTML(images []image, thumbsDir string, installDir string) ([]string
 	<a href="{{.Full}}">
 		<img src="{{.Thumb}}">
 	</a>
-</div><-- .image -->
+	<p>{{.Desc}}</p>
+</div><!-- .image -->
 {{end}}
 </body>
 </html>
@@ -367,6 +373,7 @@ func generateHTML(images []image, thumbsDir string, installDir string) ([]string
 	type Image struct {
 		Full  string
 		Thumb string
+		Desc  string
 	}
 
 	var htmlImages []Image
@@ -384,6 +391,7 @@ func generateHTML(images []image, thumbsDir string, installDir string) ([]string
 		htmlImages = append(htmlImages, Image{
 			Full:  basename(full),
 			Thumb: basename(thumb),
+			Desc:  img.description,
 		})
 	}
 
@@ -475,7 +483,7 @@ func copyFile(src string, dest string) error {
 	}
 	defer destFD.Close()
 
-	_, err = io.Copy(srcFD, destFD)
+	_, err = io.Copy(destFD, srcFD)
 	if err != nil {
 		return fmt.Errorf("Unable to copy file: %s", err.Error())
 	}
