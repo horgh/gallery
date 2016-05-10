@@ -19,6 +19,9 @@ import (
 	"strings"
 )
 
+// pageSize defines how many images to have per page.
+const pageSize = 10
+
 // args holds the command line arguments.
 type args struct {
 	mode       string
@@ -27,6 +30,13 @@ type args struct {
 	imageDir   string
 	thumbsDir  string
 	installDir string
+}
+
+// HTMLImage holds image info needed in HTML.
+type HTMLImage struct {
+	FullImageURL  string
+	ThumbImageURL string
+	Description   string
 }
 
 // image holds image information from the metadata file.
@@ -144,11 +154,10 @@ func main() {
 	}
 
 	// Generate HTML with chosen images
-	pages, err := generateHTML(chosenImages, myArgs.thumbsDir, myArgs.installDir)
+	err = generateHTML(chosenImages, myArgs.thumbsDir, myArgs.installDir)
 	if err != nil {
 		log.Fatalf("Problem generating HTML: %s", err.Error())
 	}
-	log.Printf("Generated %d pages", len(pages))
 
 	// Copy images and thumbnails to install directory
 	err = installImages(chosenImages, myArgs.thumbsDir, myArgs.installDir)
@@ -344,81 +353,52 @@ func generateImages(imageDir string, thumbsDir string, images []image) error {
 // generateHTML does just that!
 //
 // Split over several pages if necessary.
-func generateHTML(images []image, thumbsDir string, installDir string) ([]string, error) {
-	const tpl = `
-<!DOCTYPE html>
-<html>
-<head>
-	<meta charset="UTF-8">
-	<title>Gallery</title>
-</head>
-<body>
-{{range .Images}}
-<div class="image">
-	<a href="{{.Full}}">
-		<img src="{{.Thumb}}">
-	</a>
-	<p>{{.Desc}}</p>
-</div><!-- .image -->
-{{end}}
-</body>
-</html>
-`
+func generateHTML(images []image, thumbsDir string, installDir string) error {
+	var htmlImages []HTMLImage
 
-	t, err := template.New("page").Parse(tpl)
-	if err != nil {
-		return nil, fmt.Errorf("Unable to parse HTML template: %s", err.Error())
+	page := 1
+
+	totalPages := len(images) / pageSize
+	if len(images)%pageSize > 0 {
+		totalPages++
 	}
 
-	type Image struct {
-		Full  string
-		Thumb string
-		Desc  string
-	}
-
-	var htmlImages []Image
 	for _, img := range images {
 		thumb, err := img.getResizedFilename(4, thumbsDir)
 		if err != nil {
-			return nil, fmt.Errorf("Unable to determine filename: %s", err.Error())
+			return fmt.Errorf("Unable to determine filename: %s", err.Error())
 		}
 
 		full, err := img.getResizedFilename(20, thumbsDir)
 		if err != nil {
-			return nil, fmt.Errorf("Unable to determine filename: %s", err.Error())
+			return fmt.Errorf("Unable to determine filename: %s", err.Error())
 		}
 
-		htmlImages = append(htmlImages, Image{
-			Full:  basename(full),
-			Thumb: basename(thumb),
-			Desc:  img.description,
+		htmlImages = append(htmlImages, HTMLImage{
+			FullImageURL:  basename(full),
+			ThumbImageURL: basename(thumb),
+			Description:   img.description,
 		})
+
+		if len(htmlImages) == pageSize {
+			err = writeHTMLPage(totalPages, len(images), page, htmlImages, installDir)
+			if err != nil {
+				return fmt.Errorf("Unable to generate/write HTML: %s", err.Error())
+			}
+
+			htmlImages = nil
+			page++
+		}
 	}
 
-	data := struct {
-		Images []Image
-	}{
-		Images: htmlImages,
+	if len(htmlImages) > 0 {
+		err := writeHTMLPage(totalPages, len(images), page, htmlImages, installDir)
+		if err != nil {
+			return fmt.Errorf("Unable to generate/write HTML: %s", err.Error())
+		}
 	}
 
-	htmlPath := fmt.Sprintf("%s%c%s", installDir, os.PathSeparator, "index.html")
-
-	fh, err := os.Create(htmlPath)
-	if err != nil {
-		return nil, fmt.Errorf("Unable to open HTML file: %s", err.Error())
-	}
-	defer fh.Close()
-
-	err = t.Execute(fh, data)
-	if err != nil {
-		return nil, fmt.Errorf("Unable to execute template: %s", err.Error())
-	}
-
-	var pages []string
-
-	pages = append(pages, htmlPath)
-
-	return pages, nil
+	return nil
 }
 
 // basename determines the name of the file or directory.
@@ -435,6 +415,98 @@ func basename(file string) string {
 	}
 
 	return file[i+1:]
+}
+
+// writeHTMLPage generates and writes an HTML page for the
+// given set of images.
+func writeHTMLPage(totalPages int, totalImages int, page int, images []HTMLImage, installDir string) error {
+	const tpl = `<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>Gallery</title>
+</head>
+<body>
+{{range .Images}}
+<div class="image">
+	<a href="{{.FullImageURL}}">
+		<img src="{{.ThumbImageURL}}">
+	</a>
+	<p>{{.Description}}</p>
+</div>
+{{end}}
+{{if gt .TotalPages 1}}
+<p>There are {{.TotalPages}} pages of images.</p>
+
+{{if gt .Page 1}}
+<p><a href="{{.PreviousURL}}">Previous page</a></p>
+{{end}}
+
+<p>This is page {{.Page}}.</p>
+
+{{if lt .Page .TotalPages}}
+<p><a href="{{.NextURL}}">Next page</a></p>
+{{end}}
+
+{{end}}
+</body>
+</html>
+`
+
+	t, err := template.New("page").Parse(tpl)
+	if err != nil {
+		return fmt.Errorf("Unable to parse HTML template: %s", err.Error())
+	}
+
+	// Figure out filename to write.
+	filename := "index.html"
+	if page > 1 {
+		filename = fmt.Sprintf("page-%d.html", page)
+	}
+
+	path := fmt.Sprintf("%s%c%s", installDir, os.PathSeparator, filename)
+
+	fh, err := os.Create(path)
+	if err != nil {
+		return fmt.Errorf("Unable to open HTML file: %s", err.Error())
+	}
+	defer fh.Close()
+
+	previousURL := ""
+	if page > 1 {
+		if page == 2 {
+			previousURL = "index.html"
+		} else {
+			previousURL = fmt.Sprintf("page-%d.html", page-1)
+		}
+	}
+
+	nextURL := ""
+	if page < totalPages {
+		nextURL = fmt.Sprintf("page-%d.html", page+1)
+	}
+
+	data := struct {
+		Images      []HTMLImage
+		TotalPages  int
+		Page        int
+		PreviousURL string
+		NextURL     string
+	}{
+		Images:      images,
+		TotalPages:  totalPages,
+		Page:        page,
+		PreviousURL: previousURL,
+		NextURL:     nextURL,
+	}
+
+	err = t.Execute(fh, data)
+	if err != nil {
+		return fmt.Errorf("Unable to execute template: %s", err.Error())
+	}
+
+	log.Printf("Wrote HTML file: %s", filename)
+	return nil
 }
 
 // installImages copies the chosen images from the thumbs
