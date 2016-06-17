@@ -24,8 +24,6 @@ const pageSize = 20
 
 // args holds the command line arguments.
 type args struct {
-	mode string
-
 	// metaFile is the path to a file describing each image. Its filename,
 	// descriptive text, and tags if any.
 	metaFile string
@@ -186,7 +184,6 @@ func main() {
 
 // getArgs retrieves and validates command line arguments.
 func getArgs() (args, error) {
-	mode := flag.String("mode", "", "Runtime mode. Possible: generate")
 	metaFile := flag.String("meta-file", "", "Path to the file describing and listing the images.")
 	tagString := flag.String("tags", "", "Include images with these tag(s) only. Separate by commas. Optional.")
 	imageDir := flag.String("image-dir", "", "Path to the directory with all images.")
@@ -196,11 +193,6 @@ func getArgs() (args, error) {
 	flag.Parse()
 
 	myArgs := args{}
-
-	if *mode != "generate" {
-		return args{}, fmt.Errorf("Invalid mode: %s", *mode)
-	}
-	myArgs.mode = *mode
 
 	if len(*metaFile) == 0 {
 		return args{}, fmt.Errorf("You must provide a metadata file.")
