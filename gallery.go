@@ -16,6 +16,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 )
 
@@ -419,8 +420,8 @@ func generateHTML(images []image, resizedImageDir string, thumbSize int,
 		}
 
 		htmlImages = append(htmlImages, HTMLImage{
-			FullImageURL:  basename(fullFilename),
-			ThumbImageURL: basename(thumbFilename),
+			FullImageURL:  filepath.Base(fullFilename),
+			ThumbImageURL: filepath.Base(thumbFilename),
 			Description:   img.description,
 		})
 
@@ -443,22 +444,6 @@ func generateHTML(images []image, resizedImageDir string, thumbSize int,
 	}
 
 	return nil
-}
-
-// basename determines the name of the file or directory.
-// All directory information preceding the lowest will
-// be stripped.
-func basename(file string) string {
-	i := strings.LastIndexByte(file, os.PathSeparator)
-	if i == -1 {
-		return file
-	}
-
-	if i+1 == len(file) {
-		return file
-	}
-
-	return file[i+1:]
 }
 
 // writeHTMLPage generates and writes an HTML page for the given set of images.
@@ -570,10 +555,10 @@ func installImages(images []image, resizedImageDir string, thumbSize int,
 		}
 
 		thumbTarget := fmt.Sprintf("%s%c%s", installDir, os.PathSeparator,
-			basename(thumb))
+			filepath.Base(thumb))
 
 		fullTarget := fmt.Sprintf("%s%c%s", installDir, os.PathSeparator,
-			basename(full))
+			filepath.Base(full))
 
 		err = copyFile(thumb, thumbTarget)
 		if err != nil {
