@@ -35,10 +35,10 @@ type args struct {
 	// imageDir is where the raw images are found.
 	imageDir string
 
-	// thumbsDir is where we place resized images from imageDir. You probably
-	// will want to keep that around persistently rather than resizing
-	// repeatedly.
-	thumbsDir string
+	// resizedImageDir is where we place resized images from imageDir.
+	// You probably will want to keep that around persistently rather than
+	// resizing repeatedly.
+	resizedImageDir string
 
 	// installDir is where the selected images and HTML ends up. You probably
 	// want to wipe this out each run.
@@ -90,8 +90,9 @@ func (i image) hasTag(tag string) bool {
 // It will place the resize in the given dir with the suffix _<percent> (before
 // the file suffix).
 // For the percentage to use, it really depends on the images you have.
-func (i image) shrink(percent int, imageDir string, thumbsDir string) error {
-	newFilename, err := i.getResizedFilename(percent, thumbsDir)
+func (i image) shrink(percent int, imageDir string,
+	resizedImageDir string) error {
+	newFilename, err := i.getResizedFilename(percent, resizedImageDir)
 	if err != nil {
 		return fmt.Errorf("Unable to determine path to file: %s", err.Error())
 	}
@@ -129,14 +130,14 @@ func (i image) shrink(percent int, imageDir string, thumbsDir string) error {
 // getResizedFilename gets the filename and path to the file with the given
 // percentage shrunk size.
 func (i image) getResizedFilename(percent int,
-	thumbsDir string) (string, error) {
+	resizedImageDir string) (string, error) {
 	namePieces := strings.Split(i.filename, ".")
 
 	if len(namePieces) != 2 {
 		return "", fmt.Errorf("Unexpected filename format")
 	}
 
-	newFilename := fmt.Sprintf("%s%c%s_%d.%s", thumbsDir, os.PathSeparator,
+	newFilename := fmt.Sprintf("%s%c%s_%d.%s", resizedImageDir, os.PathSeparator,
 		namePieces[0], percent, namePieces[1])
 
 	return newFilename, nil
@@ -175,21 +176,21 @@ func main() {
 	}
 
 	// Generate resized images for all chosen images.
-	err = generateImages(myArgs.imageDir, myArgs.thumbsDir, myArgs.thumbSize,
-		myArgs.fullSize, chosenImages)
+	err = generateImages(myArgs.imageDir, myArgs.resizedImageDir,
+		myArgs.thumbSize, myArgs.fullSize, chosenImages)
 	if err != nil {
 		log.Fatalf("Problem generating images: %s", err.Error())
 	}
 
 	// Generate HTML with chosen images
-	err = generateHTML(chosenImages, myArgs.thumbsDir, myArgs.thumbSize,
+	err = generateHTML(chosenImages, myArgs.resizedImageDir, myArgs.thumbSize,
 		myArgs.fullSize, myArgs.installDir)
 	if err != nil {
 		log.Fatalf("Problem generating HTML: %s", err.Error())
 	}
 
 	// Copy resized images to the install directory
-	err = installImages(chosenImages, myArgs.thumbsDir, myArgs.thumbSize,
+	err = installImages(chosenImages, myArgs.resizedImageDir, myArgs.thumbSize,
 		myArgs.fullSize, myArgs.installDir)
 	if err != nil {
 		log.Fatalf("Unable to install images: %s", err.Error())
@@ -203,7 +204,7 @@ func getArgs() (args, error) {
 	metaFile := flag.String("meta-file", "", "Path to the file describing and listing the images.")
 	tagString := flag.String("tags", "", "Include images with these tag(s) only. Separate by commas. Optional.")
 	imageDir := flag.String("image-dir", "", "Path to the directory with all images.")
-	thumbsDir := flag.String("thumbs-dir", "", "Path to the directory with thumbnail images. May be empty - we will generate thumbnails on demand.")
+	resizedImageDir := flag.String("resized-dir", "", "Path to the directory to hold resized images. We resize on demand.")
 	installDir := flag.String("install-dir", "", "Path to the directory to install to.")
 	thumbSize := flag.Int("thumb-size", 4, "Resize images to this percent of the original to create thumbnails.")
 	fullSize := flag.Int("full-size", 20, "Resize images to this percent of the original to create the 'full' image (linked to by the thumbnail).")
@@ -230,10 +231,10 @@ func getArgs() (args, error) {
 	}
 	myArgs.imageDir = *imageDir
 
-	if len(*thumbsDir) == 0 {
-		return args{}, fmt.Errorf("You must provide a thumbnails directory.")
+	if len(*resizedImageDir) == 0 {
+		return args{}, fmt.Errorf("You must provide a resized image directory.")
 	}
-	myArgs.thumbsDir = *thumbsDir
+	myArgs.resizedImageDir = *resizedImageDir
 
 	if len(*installDir) == 0 {
 		return args{}, fmt.Errorf("You must provide an install directory.")
@@ -373,15 +374,15 @@ func chooseImages(tags []string, images []image) ([]image, error) {
 // thumbnail. We link to the full size one from the main page.
 // We place the resized images in the thumbs directory.
 // We only resize if the resized image is not already present.
-func generateImages(imageDir string, thumbsDir string, thumbSize int,
+func generateImages(imageDir string, resizedImageDir string, thumbSize int,
 	fullSize int, images []image) error {
 	for _, image := range images {
-		err := image.shrink(thumbSize, imageDir, thumbsDir)
+		err := image.shrink(thumbSize, imageDir, resizedImageDir)
 		if err != nil {
 			return fmt.Errorf("Unable to resize to %d%%: %s", thumbSize, err.Error())
 		}
 
-		err = image.shrink(fullSize, imageDir, thumbsDir)
+		err = image.shrink(fullSize, imageDir, resizedImageDir)
 		if err != nil {
 			return fmt.Errorf("Unable to resize to %d%%: %s", fullSize, err.Error())
 		}
@@ -393,7 +394,7 @@ func generateImages(imageDir string, thumbsDir string, thumbSize int,
 // generateHTML does just that!
 //
 // Split over several pages if necessary.
-func generateHTML(images []image, thumbsDir string, thumbSize int,
+func generateHTML(images []image, resizedImageDir string, thumbSize int,
 	fullSize int, installDir string) error {
 	var htmlImages []HTMLImage
 
@@ -405,13 +406,13 @@ func generateHTML(images []image, thumbsDir string, thumbSize int,
 	}
 
 	for _, img := range images {
-		thumbFilename, err := img.getResizedFilename(thumbSize, thumbsDir)
+		thumbFilename, err := img.getResizedFilename(thumbSize, resizedImageDir)
 		if err != nil {
 			return fmt.Errorf("Unable to determine thumbnail filename: %s",
 				err.Error())
 		}
 
-		fullFilename, err := img.getResizedFilename(fullSize, thumbsDir)
+		fullFilename, err := img.getResizedFilename(fullSize, resizedImageDir)
 		if err != nil {
 			return fmt.Errorf("Unable to determine full image filename: %s",
 				err.Error())
@@ -551,18 +552,18 @@ func writeHTMLPage(totalPages int, totalImages int, page int,
 	return nil
 }
 
-// installImages copies the chosen images from the thumbs directory into the
+// installImages copies the chosen images from the resized directory into the
 // install directory.
-func installImages(images []image, thumbsDir string, thumbSize int,
+func installImages(images []image, resizedImageDir string, thumbSize int,
 	fullSize int, installDir string) error {
 	for _, image := range images {
-		thumb, err := image.getResizedFilename(thumbSize, thumbsDir)
+		thumb, err := image.getResizedFilename(thumbSize, resizedImageDir)
 		if err != nil {
 			return fmt.Errorf("Unable to determine thumbnail filename: %s",
 				err.Error())
 		}
 
-		full, err := image.getResizedFilename(fullSize, thumbsDir)
+		full, err := image.getResizedFilename(fullSize, resizedImageDir)
 		if err != nil {
 			return fmt.Errorf("Unable to determine full size filename: %s",
 				err.Error())
