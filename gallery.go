@@ -55,6 +55,9 @@ type args struct {
 
 	// verbose controls whether to log more verbose output.
 	verbose bool
+
+	// title we use for the <title> and header of the page.
+	title string
 }
 
 // HTMLImage holds image info needed in HTML.
@@ -185,7 +188,7 @@ func main() {
 
 	// Generate HTML with chosen images
 	err = generateHTML(chosenImages, myArgs.resizedImageDir, myArgs.thumbSize,
-		myArgs.fullSize, myArgs.installDir)
+		myArgs.fullSize, myArgs.installDir, myArgs.title)
 	if err != nil {
 		log.Fatalf("Problem generating HTML: %s", err.Error())
 	}
@@ -210,6 +213,7 @@ func getArgs() (args, error) {
 	thumbSize := flag.Int("thumb-size", 4, "Resize images to this percent of the original to create thumbnails.")
 	fullSize := flag.Int("full-size", 20, "Resize images to this percent of the original to create the 'full' image (linked to by the thumbnail).")
 	verbose := flag.Bool("verbose", false, "Toggle more verbose output.")
+	title := flag.String("title", "Gallery", "Title of the gallery. We use this for the title element and page header.")
 
 	flag.Parse()
 
@@ -253,6 +257,11 @@ func getArgs() (args, error) {
 	myArgs.fullSize = *fullSize
 
 	myArgs.verbose = *verbose
+
+	if len(*title) == 0 {
+		return args{}, fmt.Errorf("Please provide a title.")
+	}
+	myArgs.title = *title
 
 	return myArgs, nil
 }
@@ -396,7 +405,7 @@ func generateImages(imageDir string, resizedImageDir string, thumbSize int,
 //
 // Split over several pages if necessary.
 func generateHTML(images []image, resizedImageDir string, thumbSize int,
-	fullSize int, installDir string) error {
+	fullSize int, installDir string, title string) error {
 	var htmlImages []HTMLImage
 
 	page := 1
@@ -426,7 +435,8 @@ func generateHTML(images []image, resizedImageDir string, thumbSize int,
 		})
 
 		if len(htmlImages) == pageSize {
-			err = writeHTMLPage(totalPages, len(images), page, htmlImages, installDir)
+			err = writeHTMLPage(totalPages, len(images), page, htmlImages, installDir,
+				title)
 			if err != nil {
 				return fmt.Errorf("Unable to generate/write HTML: %s", err.Error())
 			}
@@ -437,7 +447,8 @@ func generateHTML(images []image, resizedImageDir string, thumbSize int,
 	}
 
 	if len(htmlImages) > 0 {
-		err := writeHTMLPage(totalPages, len(images), page, htmlImages, installDir)
+		err := writeHTMLPage(totalPages, len(images), page, htmlImages, installDir,
+			title)
 		if err != nil {
 			return fmt.Errorf("Unable to generate/write HTML: %s", err.Error())
 		}
@@ -448,14 +459,15 @@ func generateHTML(images []image, resizedImageDir string, thumbSize int,
 
 // writeHTMLPage generates and writes an HTML page for the given set of images.
 func writeHTMLPage(totalPages int, totalImages int, page int,
-	images []HTMLImage, installDir string) error {
+	images []HTMLImage, installDir string, title string) error {
 	const tpl = `<!DOCTYPE html>
 <html>
 <head>
 	<meta charset="UTF-8">
-	<title>Gallery</title>
+	<title>{{.Title}}</title>
 </head>
 <body>
+<h1>{{.Title}}</h1>
 {{range .Images}}
 <div class="image">
 	<a href="{{.FullImageURL}}">
@@ -515,12 +527,14 @@ func writeHTMLPage(totalPages int, totalImages int, page int,
 	}
 
 	data := struct {
+		Title       string
 		Images      []HTMLImage
 		TotalPages  int
 		Page        int
 		PreviousURL string
 		NextURL     string
 	}{
+		Title:       title,
 		Images:      images,
 		TotalPages:  totalPages,
 		Page:        page,
