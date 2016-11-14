@@ -23,41 +23,41 @@ import (
 // pageSize defines how many images to have per page.
 const pageSize = 20
 
-// args holds the command line arguments.
-type args struct {
-	// metaFile is the path to a file describing each image. Its filename,
+// Args holds the command line arguments.
+type Args struct {
+	// MetaFile is the path to a file describing each image. Its filename,
 	// descriptive text, and tags if any.
-	metaFile string
+	MetaFile string
 
-	// tags, which may be empty, holds the tags of images to include in the
+	// Tags, which may be empty, holds the tags of images to include in the
 	// build.
-	tags []string
+	Tags []string
 
-	// imageDir is where the raw images are found.
-	imageDir string
+	// ImageDir is where the raw images are found.
+	ImageDir string
 
-	// resizedImageDir is where we place resized images from imageDir.
+	// ResizedImageDir is where we place resized images from imageDir.
 	// You probably will want to keep that around persistently rather than
 	// resizing repeatedly.
-	resizedImageDir string
+	ResizedImageDir string
 
-	// installDir is where the selected images and HTML ends up. You probably
+	// InstallDir is where the selected images and HTML ends up. You probably
 	// want to wipe this out each run.
-	installDir string
+	InstallDir string
 
-	// thumbSize is the percentage size a thumbnail is of the original.
+	// ThumbSize is the percentage size a thumbnail is of the original.
 	// We will resize the original to this percentage.
-	thumbSize int
+	ThumbSize int
 
-	// fullSize is the percentage size a full image is of the original.
+	// FullSize is the percentage size a full image is of the original.
 	// We will resize the original to this percentage.
-	fullSize int
+	FullSize int
 
-	// verbose controls whether to log more verbose output.
-	verbose bool
+	// Verbose controls whether to log more verbose output.
+	Verbose bool
 
-	// title we use for the <title> and header of the page.
-	title string
+	// Title we use for the <title> and header of the page.
+	Title string
 }
 
 // HTMLImage holds image info needed in HTML.
@@ -67,21 +67,21 @@ type HTMLImage struct {
 	Description   string
 }
 
-// image holds image information from the metadata file.
-type image struct {
-	filename    string
-	description string
-	tags        []string
+// Image holds image information from the metadata file.
+type Image struct {
+	Filename    string
+	Description string
+	Tags        []string
 }
 
-func (i image) String() string {
-	return fmt.Sprintf("Filename: %s Description: %s Tags: %v", i.filename,
-		i.description, i.tags)
+func (i Image) String() string {
+	return fmt.Sprintf("Filename: %s Description: %s Tags: %v", i.Filename,
+		i.Description, i.Tags)
 }
 
 // hasTag checks if the image has the given tag.
-func (i image) hasTag(tag string) bool {
-	for _, myTag := range i.tags {
+func (i Image) hasTag(tag string) bool {
+	for _, myTag := range i.Tags {
 		if myTag == tag {
 			return true
 		}
@@ -94,7 +94,7 @@ func (i image) hasTag(tag string) bool {
 // It will place the resize in the given dir with the suffix _<percent> (before
 // the file suffix).
 // For the percentage to use, it really depends on the images you have.
-func (i image) shrink(percent int, imageDir string,
+func (i Image) shrink(percent int, imageDir string,
 	resizedImageDir string) error {
 	newFilename, err := i.getResizedFilename(percent, resizedImageDir)
 	if err != nil {
@@ -111,13 +111,13 @@ func (i image) shrink(percent int, imageDir string,
 		return fmt.Errorf("Problem stat'ing file: %s", err.Error())
 	}
 
-	origFilename := fmt.Sprintf("%s%c%s", imageDir, os.PathSeparator, i.filename)
+	origFilename := fmt.Sprintf("%s%c%s", imageDir, os.PathSeparator, i.Filename)
 
-	log.Printf("Shrinking %s to %d%%...", i.filename, percent)
+	log.Printf("Shrinking %s to %d%%...", i.Filename, percent)
 
 	_, err = os.Stat(origFilename)
 	if err != nil {
-		return fmt.Errorf("Stat failure: %s: %s", i.filename, err.Error())
+		return fmt.Errorf("Stat failure: %s: %s", i.Filename, err.Error())
 	}
 
 	cmd := exec.Command("convert", "-resize", fmt.Sprintf("%d%%", percent),
@@ -133,9 +133,9 @@ func (i image) shrink(percent int, imageDir string,
 
 // getResizedFilename gets the filename and path to the file with the given
 // percentage shrunk size.
-func (i image) getResizedFilename(percent int,
+func (i Image) getResizedFilename(percent int,
 	resizedImageDir string) (string, error) {
-	namePieces := strings.Split(i.filename, ".")
+	namePieces := strings.Split(i.Filename, ".")
 
 	if len(namePieces) != 2 {
 		return "", fmt.Errorf("Unexpected filename format")
@@ -150,7 +150,7 @@ func (i image) getResizedFilename(percent int,
 func main() {
 	log.SetFlags(0)
 
-	myArgs, err := getArgs()
+	args, err := getArgs()
 	if err != nil {
 		log.Printf("Invalid argument: %s", err.Error())
 		log.Printf("Usage: %s <arguments>", os.Args[0])
@@ -158,19 +158,19 @@ func main() {
 		os.Exit(1)
 	}
 
-	images, err := parseMetaFile(myArgs.metaFile)
+	images, err := parseMetaFile(args.MetaFile)
 	if err != nil {
 		log.Fatalf("Unable to parse metadata file: %s", err.Error())
 	}
 
-	if myArgs.verbose {
+	if args.Verbose {
 		log.Printf("Parsed %d images", len(images))
 		for _, v := range images {
 			log.Printf("Image: %s", v)
 		}
 	}
 
-	chosenImages, err := chooseImages(myArgs.tags, images)
+	chosenImages, err := chooseImages(args.Tags, images)
 	if err != nil {
 		log.Fatalf("Unable to choose images: %s", err.Error())
 	}
@@ -180,22 +180,22 @@ func main() {
 	}
 
 	// Generate resized images for all chosen images.
-	err = generateImages(myArgs.imageDir, myArgs.resizedImageDir,
-		myArgs.thumbSize, myArgs.fullSize, chosenImages)
+	err = generateImages(args.ImageDir, args.ResizedImageDir,
+		args.ThumbSize, args.FullSize, chosenImages)
 	if err != nil {
 		log.Fatalf("Problem generating images: %s", err.Error())
 	}
 
 	// Generate HTML with chosen images
-	err = generateHTML(chosenImages, myArgs.resizedImageDir, myArgs.thumbSize,
-		myArgs.fullSize, myArgs.installDir, myArgs.title)
+	err = generateHTML(chosenImages, args.ResizedImageDir, args.ThumbSize,
+		args.FullSize, args.InstallDir, args.Title)
 	if err != nil {
 		log.Fatalf("Problem generating HTML: %s", err.Error())
 	}
 
 	// Copy resized images to the install directory
-	err = installImages(chosenImages, myArgs.resizedImageDir, myArgs.thumbSize,
-		myArgs.fullSize, myArgs.installDir)
+	err = installImages(chosenImages, args.ResizedImageDir, args.ThumbSize,
+		args.FullSize, args.InstallDir)
 	if err != nil {
 		log.Fatalf("Unable to install images: %s", err.Error())
 	}
@@ -204,7 +204,7 @@ func main() {
 }
 
 // getArgs retrieves and validates command line arguments.
-func getArgs() (args, error) {
+func getArgs() (Args, error) {
 	metaFile := flag.String("meta-file", "", "Path to the file describing and listing the images.")
 	tagString := flag.String("tags", "", "Include images with these tag(s) only. Separate by commas. Optional.")
 	imageDir := flag.String("image-dir", "", "Path to the directory with all images.")
@@ -217,53 +217,53 @@ func getArgs() (args, error) {
 
 	flag.Parse()
 
-	myArgs := args{}
+	args := Args{}
 
 	if len(*metaFile) == 0 {
-		return args{}, fmt.Errorf("You must provide a metadata file.")
+		return Args{}, fmt.Errorf("You must provide a metadata file.")
 	}
-	myArgs.metaFile = *metaFile
+	args.MetaFile = *metaFile
 
 	if len(*tagString) > 0 {
 		rawTags := strings.Split(*tagString, ",")
 		for _, tag := range rawTags {
-			myArgs.tags = append(myArgs.tags, strings.TrimSpace(tag))
+			args.Tags = append(args.Tags, strings.TrimSpace(tag))
 		}
 	}
 
 	if len(*imageDir) == 0 {
-		return args{}, fmt.Errorf("You must provide an image directory.")
+		return Args{}, fmt.Errorf("You must provide an image directory.")
 	}
-	myArgs.imageDir = *imageDir
+	args.ImageDir = *imageDir
 
 	if len(*resizedImageDir) == 0 {
-		return args{}, fmt.Errorf("You must provide a resized image directory.")
+		return Args{}, fmt.Errorf("You must provide a resized image directory.")
 	}
-	myArgs.resizedImageDir = *resizedImageDir
+	args.ResizedImageDir = *resizedImageDir
 
 	if len(*installDir) == 0 {
-		return args{}, fmt.Errorf("You must provide an install directory.")
+		return Args{}, fmt.Errorf("You must provide an install directory.")
 	}
-	myArgs.installDir = *installDir
+	args.InstallDir = *installDir
 
 	if *thumbSize <= 0 || *thumbSize >= 100 {
-		return args{}, fmt.Errorf("Thumbnail size must be (0, 100).")
+		return Args{}, fmt.Errorf("Thumbnail size must be (0, 100).")
 	}
-	myArgs.thumbSize = *thumbSize
+	args.ThumbSize = *thumbSize
 
 	if *fullSize <= 0 || *fullSize >= 100 {
-		return args{}, fmt.Errorf("Full image size must be (0, 100).")
+		return Args{}, fmt.Errorf("Full image size must be (0, 100).")
 	}
-	myArgs.fullSize = *fullSize
+	args.FullSize = *fullSize
 
-	myArgs.verbose = *verbose
+	args.Verbose = *verbose
 
 	if len(*title) == 0 {
-		return args{}, fmt.Errorf("Please provide a title.")
+		return Args{}, fmt.Errorf("Please provide a title.")
 	}
-	myArgs.title = *title
+	args.Title = *title
 
-	return myArgs, nil
+	return args, nil
 }
 
 // parseMetaFile reads in a file listing images and parses it into memory.
@@ -273,7 +273,7 @@ func getArgs() (args, error) {
 // Optional: Tag: comma separated tags\n
 // Blank line
 // Then should come the next filename, or end of file.
-func parseMetaFile(filename string) ([]image, error) {
+func parseMetaFile(filename string) ([]Image, error) {
 	fh, err := os.Open(filename)
 	if err != nil {
 		return nil, fmt.Errorf("Unable to open: %s: %s", filename, err.Error())
@@ -282,7 +282,7 @@ func parseMetaFile(filename string) ([]image, error) {
 
 	scanner := bufio.NewScanner(fh)
 
-	var images []image
+	var images []Image
 
 	wantFilename := true
 	wantDescription := false
@@ -322,10 +322,10 @@ func parseMetaFile(filename string) ([]image, error) {
 		}
 
 		if len(scanner.Text()) == 0 {
-			images = append(images, image{
-				filename:    imageFilename,
-				description: description,
-				tags:        tags,
+			images = append(images, Image{
+				Filename:    imageFilename,
+				Description: description,
+				Tags:        tags,
 			})
 			wantFilename = true
 			wantDescription = false
@@ -344,10 +344,10 @@ func parseMetaFile(filename string) ([]image, error) {
 
 	// May have one last file to store
 	if !wantFilename && !wantDescription {
-		images = append(images, image{
-			filename:    imageFilename,
-			description: description,
-			tags:        tags,
+		images = append(images, Image{
+			Filename:    imageFilename,
+			Description: description,
+			Tags:        tags,
 		})
 	}
 
@@ -358,13 +358,13 @@ func parseMetaFile(filename string) ([]image, error) {
 //
 // The basis for this choice is whether the image has one of the requested tags
 // or not.
-func chooseImages(tags []string, images []image) ([]image, error) {
+func chooseImages(tags []string, images []Image) ([]Image, error) {
 	// No tags wanted? Then include everything.
 	if len(tags) == 0 {
 		return images, nil
 	}
 
-	var chosenImages []image
+	var chosenImages []Image
 
 	for _, image := range images {
 		for _, wantedTag := range tags {
@@ -385,7 +385,7 @@ func chooseImages(tags []string, images []image) ([]image, error) {
 // We place the resized images in the thumbs directory.
 // We only resize if the resized image is not already present.
 func generateImages(imageDir string, resizedImageDir string, thumbSize int,
-	fullSize int, images []image) error {
+	fullSize int, images []Image) error {
 	for _, image := range images {
 		err := image.shrink(thumbSize, imageDir, resizedImageDir)
 		if err != nil {
@@ -404,7 +404,7 @@ func generateImages(imageDir string, resizedImageDir string, thumbSize int,
 // generateHTML does just that!
 //
 // Split over several pages if necessary.
-func generateHTML(images []image, resizedImageDir string, thumbSize int,
+func generateHTML(images []Image, resizedImageDir string, thumbSize int,
 	fullSize int, installDir string, title string) error {
 	var htmlImages []HTMLImage
 
@@ -431,7 +431,7 @@ func generateHTML(images []image, resizedImageDir string, thumbSize int,
 		htmlImages = append(htmlImages, HTMLImage{
 			FullImageURL:  filepath.Base(fullFilename),
 			ThumbImageURL: filepath.Base(thumbFilename),
-			Description:   img.description,
+			Description:   img.Description,
 		})
 
 		if len(htmlImages) == pageSize {
@@ -553,7 +553,7 @@ func writeHTMLPage(totalPages int, totalImages int, page int,
 
 // installImages copies the chosen images from the resized directory into the
 // install directory.
-func installImages(images []image, resizedImageDir string, thumbSize int,
+func installImages(images []Image, resizedImageDir string, thumbSize int,
 	fullSize int, installDir string) error {
 	for _, image := range images {
 		thumb, err := image.getResizedFilename(thumbSize, resizedImageDir)
