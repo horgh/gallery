@@ -1,10 +1,10 @@
-/*
- * gallery is a program to create a standalone photo gallery
- * website. It takes a list of filenames with metadata about
- * each, and a directory of images, and can then generate
- * HTML. It can also create thumbnails.
- */
-
+//
+// gallery is a program to create a static photo gallery website.
+//
+// You provide it a list of filenames and metadata about each, and where the
+// files are located. It generates HTML for a static site, and resizes the
+// images to create thumbnails as needed.
+//
 package main
 
 import (
