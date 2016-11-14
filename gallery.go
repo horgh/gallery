@@ -98,7 +98,7 @@ func (i Image) shrink(percent int, imageDir string,
 	resizedImageDir string) error {
 	newFilename, err := i.getResizedFilename(percent, resizedImageDir)
 	if err != nil {
-		return fmt.Errorf("Unable to determine path to file: %s", err.Error())
+		return fmt.Errorf("Unable to determine path to file: %s", err)
 	}
 
 	// If the file is already present then there is nothing to do.
@@ -108,7 +108,7 @@ func (i Image) shrink(percent int, imageDir string,
 	}
 
 	if !os.IsNotExist(err) {
-		return fmt.Errorf("Problem stat'ing file: %s", err.Error())
+		return fmt.Errorf("Problem stat'ing file: %s", err)
 	}
 
 	origFilename := fmt.Sprintf("%s%c%s", imageDir, os.PathSeparator, i.Filename)
@@ -117,7 +117,7 @@ func (i Image) shrink(percent int, imageDir string,
 
 	_, err = os.Stat(origFilename)
 	if err != nil {
-		return fmt.Errorf("Stat failure: %s: %s", i.Filename, err.Error())
+		return fmt.Errorf("Stat failure: %s: %s", i.Filename, err)
 	}
 
 	cmd := exec.Command("convert", "-resize", fmt.Sprintf("%d%%", percent),
@@ -125,7 +125,7 @@ func (i Image) shrink(percent int, imageDir string,
 
 	err = cmd.Run()
 	if err != nil {
-		return fmt.Errorf("Unable to run command: %s", err.Error())
+		return fmt.Errorf("Unable to run command: %s", err)
 	}
 
 	return nil
@@ -152,7 +152,7 @@ func main() {
 
 	args, err := getArgs()
 	if err != nil {
-		log.Printf("Invalid argument: %s", err.Error())
+		log.Printf("Invalid argument: %s", err)
 		log.Printf("Usage: %s <arguments>", os.Args[0])
 		flag.PrintDefaults()
 		os.Exit(1)
@@ -160,7 +160,7 @@ func main() {
 
 	images, err := parseMetaFile(args.MetaFile)
 	if err != nil {
-		log.Fatalf("Unable to parse metadata file: %s", err.Error())
+		log.Fatalf("Unable to parse metadata file: %s", err)
 	}
 
 	if args.Verbose {
@@ -172,7 +172,7 @@ func main() {
 
 	chosenImages, err := chooseImages(args.Tags, images)
 	if err != nil {
-		log.Fatalf("Unable to choose images: %s", err.Error())
+		log.Fatalf("Unable to choose images: %s", err)
 	}
 	log.Printf("Chose %d images", len(chosenImages))
 	for _, v := range chosenImages {
@@ -183,21 +183,21 @@ func main() {
 	err = generateImages(args.ImageDir, args.ResizedImageDir,
 		args.ThumbSize, args.FullSize, chosenImages)
 	if err != nil {
-		log.Fatalf("Problem generating images: %s", err.Error())
+		log.Fatalf("Problem generating images: %s", err)
 	}
 
 	// Generate HTML with chosen images
 	err = generateHTML(chosenImages, args.ResizedImageDir, args.ThumbSize,
 		args.FullSize, args.InstallDir, args.Title)
 	if err != nil {
-		log.Fatalf("Problem generating HTML: %s", err.Error())
+		log.Fatalf("Problem generating HTML: %s", err)
 	}
 
 	// Copy resized images to the install directory
 	err = installImages(chosenImages, args.ResizedImageDir, args.ThumbSize,
 		args.FullSize, args.InstallDir)
 	if err != nil {
-		log.Fatalf("Unable to install images: %s", err.Error())
+		log.Fatalf("Unable to install images: %s", err)
 	}
 
 	log.Printf("Done!")
@@ -276,7 +276,7 @@ func getArgs() (Args, error) {
 func parseMetaFile(filename string) ([]Image, error) {
 	fh, err := os.Open(filename)
 	if err != nil {
-		return nil, fmt.Errorf("Unable to open: %s: %s", filename, err.Error())
+		return nil, fmt.Errorf("Unable to open: %s: %s", filename, err)
 	}
 	defer fh.Close()
 
@@ -339,7 +339,7 @@ func parseMetaFile(filename string) ([]Image, error) {
 	}
 
 	if scanner.Err() != nil {
-		return nil, fmt.Errorf("Scan failure: %s", scanner.Err().Error())
+		return nil, fmt.Errorf("Scan failure: %s", scanner.Err())
 	}
 
 	// May have one last file to store
@@ -389,12 +389,12 @@ func generateImages(imageDir string, resizedImageDir string, thumbSize int,
 	for _, image := range images {
 		err := image.shrink(thumbSize, imageDir, resizedImageDir)
 		if err != nil {
-			return fmt.Errorf("Unable to resize to %d%%: %s", thumbSize, err.Error())
+			return fmt.Errorf("Unable to resize to %d%%: %s", thumbSize, err)
 		}
 
 		err = image.shrink(fullSize, imageDir, resizedImageDir)
 		if err != nil {
-			return fmt.Errorf("Unable to resize to %d%%: %s", fullSize, err.Error())
+			return fmt.Errorf("Unable to resize to %d%%: %s", fullSize, err)
 		}
 	}
 
@@ -418,14 +418,12 @@ func generateHTML(images []Image, resizedImageDir string, thumbSize int,
 	for _, img := range images {
 		thumbFilename, err := img.getResizedFilename(thumbSize, resizedImageDir)
 		if err != nil {
-			return fmt.Errorf("Unable to determine thumbnail filename: %s",
-				err.Error())
+			return fmt.Errorf("Unable to determine thumbnail filename: %s", err)
 		}
 
 		fullFilename, err := img.getResizedFilename(fullSize, resizedImageDir)
 		if err != nil {
-			return fmt.Errorf("Unable to determine full image filename: %s",
-				err.Error())
+			return fmt.Errorf("Unable to determine full image filename: %s", err)
 		}
 
 		htmlImages = append(htmlImages, HTMLImage{
@@ -438,7 +436,7 @@ func generateHTML(images []Image, resizedImageDir string, thumbSize int,
 			err = writeHTMLPage(totalPages, len(images), page, htmlImages, installDir,
 				title)
 			if err != nil {
-				return fmt.Errorf("Unable to generate/write HTML: %s", err.Error())
+				return fmt.Errorf("Unable to generate/write HTML: %s", err)
 			}
 
 			htmlImages = nil
@@ -450,7 +448,7 @@ func generateHTML(images []Image, resizedImageDir string, thumbSize int,
 		err := writeHTMLPage(totalPages, len(images), page, htmlImages, installDir,
 			title)
 		if err != nil {
-			return fmt.Errorf("Unable to generate/write HTML: %s", err.Error())
+			return fmt.Errorf("Unable to generate/write HTML: %s", err)
 		}
 	}
 
@@ -494,7 +492,7 @@ func writeHTMLPage(totalPages int, totalImages int, page int,
 
 	t, err := template.New("page").Parse(tpl)
 	if err != nil {
-		return fmt.Errorf("Unable to parse HTML template: %s", err.Error())
+		return fmt.Errorf("Unable to parse HTML template: %s", err)
 	}
 
 	// Figure out filename to write.
@@ -508,7 +506,7 @@ func writeHTMLPage(totalPages int, totalImages int, page int,
 
 	fh, err := os.Create(path)
 	if err != nil {
-		return fmt.Errorf("Unable to open HTML file: %s", err.Error())
+		return fmt.Errorf("Unable to open HTML file: %s", err)
 	}
 	defer fh.Close()
 
@@ -544,7 +542,7 @@ func writeHTMLPage(totalPages int, totalImages int, page int,
 
 	err = t.Execute(fh, data)
 	if err != nil {
-		return fmt.Errorf("Unable to execute template: %s", err.Error())
+		return fmt.Errorf("Unable to execute template: %s", err)
 	}
 
 	log.Printf("Wrote HTML file: %s", filename)
@@ -558,14 +556,12 @@ func installImages(images []Image, resizedImageDir string, thumbSize int,
 	for _, image := range images {
 		thumb, err := image.getResizedFilename(thumbSize, resizedImageDir)
 		if err != nil {
-			return fmt.Errorf("Unable to determine thumbnail filename: %s",
-				err.Error())
+			return fmt.Errorf("Unable to determine thumbnail filename: %s", err)
 		}
 
 		full, err := image.getResizedFilename(fullSize, resizedImageDir)
 		if err != nil {
-			return fmt.Errorf("Unable to determine full size filename: %s",
-				err.Error())
+			return fmt.Errorf("Unable to determine full size filename: %s", err)
 		}
 
 		thumbTarget := fmt.Sprintf("%s%c%s", installDir, os.PathSeparator,
@@ -576,14 +572,12 @@ func installImages(images []Image, resizedImageDir string, thumbSize int,
 
 		err = copyFile(thumb, thumbTarget)
 		if err != nil {
-			return fmt.Errorf("Unable to copy %s to %s: %s", thumb, thumbTarget,
-				err.Error())
+			return fmt.Errorf("Unable to copy %s to %s: %s", thumb, thumbTarget, err)
 		}
 
 		err = copyFile(full, fullTarget)
 		if err != nil {
-			return fmt.Errorf("Unable to copy %s to %s: %s", full, fullTarget,
-				err.Error())
+			return fmt.Errorf("Unable to copy %s to %s: %s", full, fullTarget, err)
 		}
 	}
 
@@ -594,19 +588,19 @@ func installImages(images []Image, resizedImageDir string, thumbSize int,
 func copyFile(src string, dest string) error {
 	srcFD, err := os.Open(src)
 	if err != nil {
-		return fmt.Errorf("Unable to open file (read): %s", err.Error())
+		return fmt.Errorf("Unable to open file (read): %s", err)
 	}
 	defer srcFD.Close()
 
 	destFD, err := os.Create(dest)
 	if err != nil {
-		return fmt.Errorf("Unable to open file (write): %s", err.Error())
+		return fmt.Errorf("Unable to open file (write): %s", err)
 	}
 	defer destFD.Close()
 
 	_, err = io.Copy(destFD, srcFD)
 	if err != nil {
-		return fmt.Errorf("Unable to copy file: %s", err.Error())
+		return fmt.Errorf("Unable to copy file: %s", err)
 	}
 
 	return nil
