@@ -184,6 +184,25 @@ func (i *Image) makeLargeImage(resizeDir string, verbose,
 		return fmt.Errorf("Unable to open image: %s: %s", i.Filename, err)
 	}
 
+	// May not need to resize.
+	if image.Width() <= i.LargeImageSize && image.Height() <= i.LargeImageSize {
+		err := copyFile(i.Path, resizeFile)
+		if err != nil {
+			_ = image.Destroy()
+			return fmt.Errorf("Unable to copy image: %s to %s: %s", i.Path,
+				resizeFile, err)
+		}
+
+		err = image.Destroy()
+		if err != nil {
+			return fmt.Errorf("Unable to clean up: %s", err)
+		}
+
+		i.LargeImagePath = resizeFile
+		i.LargeImageFilename = path.Base(resizeFile)
+		return nil
+	}
+
 	if image.Width() > image.Height() {
 		err := image.Resize(fmt.Sprintf("%dx", i.LargeImageSize))
 		if err != nil {

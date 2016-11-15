@@ -145,12 +145,12 @@ func makeImagePageHTML(image HTMLImage, dir, albumName string,
 	{{end}}
 </div>
 
-{{if .NextURL}}
-	<a href="{{.NextURL}}">Next</a>
-{{end}}
-
 {{if .PreviousURL}}
 	<a href="{{.PreviousURL}}">Previous</a>
+{{end}}
+
+{{if .NextURL}}
+	<a href="{{.NextURL}}">Next</a>
 {{end}}
 `
 
