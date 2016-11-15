@@ -10,9 +10,19 @@ import (
 
 // Album holds information about an album of images.
 type Album struct {
-	Images       []Image
+	// Name/title.
+	Name string
+	// File describing images in the album.
+	File string
+	// Tags tells us to include images that has one of these tags. If there are
+	// no tags specified, then include all images.
+	Tags []string
+	// All available images. Parsed from the album file.
+	Images []Image
+	// A subset of the available images. Those chosen based on tags.
 	ChosenImages []Image
-	PageSize     int
+	// How many images per page.
+	PageSize int
 }
 
 // LoadAlbumFile parses a file listing images and information about them.
@@ -20,13 +30,15 @@ type Album struct {
 // Format:
 // filename\n
 // Description\n
-// Optional: Tag: comma separated tags\n
+// Optional: Tag: comma separated tags on the image\n
 // Blank line
 // Then should come the next filename, or end of file.
-func (a *Album) LoadAlbumFile(filename string) error {
-	fh, err := os.Open(filename)
+//
+// This means each block describes information about one file.
+func (a *Album) LoadAlbumFile() error {
+	fh, err := os.Open(a.File)
 	if err != nil {
-		return fmt.Errorf("Unable to open: %s: %s", filename, err)
+		return fmt.Errorf("Unable to open: %s: %s", a.File, err)
 	}
 
 	scanner := bufio.NewScanner(fh)
@@ -78,7 +90,7 @@ func (a *Album) LoadAlbumFile(filename string) error {
 			})
 			wantFilename = true
 			wantDescription = false
-			filename = ""
+			imageFilename = ""
 			description = ""
 			tags = nil
 			continue
@@ -114,15 +126,15 @@ func (a *Album) LoadAlbumFile(filename string) error {
 //
 // The basis for this choice is whether the image has one of the requested tags
 // or not.
-func (a *Album) ChooseImages(tags []string) error {
+func (a *Album) ChooseImages() error {
 	// No tags wanted? Then include everything.
-	if len(tags) == 0 {
+	if len(a.Tags) == 0 {
 		a.ChosenImages = a.Images
 		return nil
 	}
 
 	for _, image := range a.Images {
-		for _, wantedTag := range tags {
+		for _, wantedTag := range a.Tags {
 			if image.hasTag(wantedTag) {
 				a.ChosenImages = append(a.ChosenImages, image)
 				break
@@ -208,7 +220,7 @@ func (a *Album) InstallImages(resizedImageDir string, thumbSize int,
 //
 // Split over several pages if necessary.
 func (a *Album) GenerateHTML(resizedImageDir string, thumbSize int,
-	fullSize int, installDir string, title string) error {
+	fullSize int, installDir string) error {
 
 	err := makeDirIfNotExist(installDir)
 	if err != nil {
@@ -243,7 +255,7 @@ func (a *Album) GenerateHTML(resizedImageDir string, thumbSize int,
 
 		if len(htmlImages) == a.PageSize {
 			err := writeHTMLPage(totalPages, len(a.ChosenImages), page, htmlImages,
-				installDir, title)
+				installDir, a.Name)
 			if err != nil {
 				return fmt.Errorf("Unable to generate/write HTML: %s", err)
 			}
@@ -255,7 +267,7 @@ func (a *Album) GenerateHTML(resizedImageDir string, thumbSize int,
 
 	if len(htmlImages) > 0 {
 		err := writeHTMLPage(totalPages, len(a.ChosenImages), page, htmlImages,
-			installDir, title)
+			installDir, a.Name)
 		if err != nil {
 			return fmt.Errorf("Unable to generate/write HTML: %s", err)
 		}

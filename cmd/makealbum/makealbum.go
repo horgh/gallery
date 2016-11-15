@@ -68,15 +68,18 @@ func main() {
 	}
 
 	album := gallery.Album{
+		File:     args.AlbumFile,
+		Name:     args.Title,
+		Tags:     args.Tags,
 		PageSize: 20,
 	}
 
-	err = album.LoadAlbumFile(args.AlbumFile)
+	err = album.LoadAlbumFile()
 	if err != nil {
 		log.Fatalf("Unable to parse metadata file: %s", err)
 	}
 
-	err = album.ChooseImages(args.Tags)
+	err = album.ChooseImages()
 	if err != nil {
 		log.Fatalf("Unable to choose images: %s", err)
 	}
@@ -88,7 +91,7 @@ func main() {
 	}
 
 	err = album.GenerateHTML(args.ResizedImageDir, args.ThumbSize,
-		args.FullSize, args.InstallDir, args.Title)
+		args.FullSize, args.InstallDir)
 	if err != nil {
 		log.Fatalf("Problem generating HTML: %s", err)
 	}
