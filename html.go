@@ -36,7 +36,9 @@ func makeAlbumPageHTML(totalPages, totalImages, page int,
 	<a href="{{.FullImageURL}}">
 		<img src="{{.ThumbImageURL}}">
 	</a>
-	<p>{{.Description}}</p>
+	{{if .Description}}
+		<p>{{.Description}}</p>
+	{{end}}
 </div>
 {{end}}
 {{if gt .TotalPages 1}}

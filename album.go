@@ -60,7 +60,7 @@ type Album struct {
 //
 // Format:
 // filename\n
-// Description\n
+// Optional: Description\n
 // Optional: Tag: comma separated tags on the image\n
 // Blank line
 // Then should come the next filename, or end of file.
@@ -74,81 +74,73 @@ func (a *Album) LoadAlbumFile() error {
 
 	scanner := bufio.NewScanner(fh)
 
-	wantFilename := true
-	wantDescription := false
-	imageFilename := ""
+	filename := ""
 	description := ""
 	var tags []string
 
 	for scanner.Scan() {
-		if wantFilename {
-			imageFilename = scanner.Text()
-			if len(imageFilename) == 0 {
+		line := strings.TrimSpace(scanner.Text())
+
+		if len(filename) == 0 {
+			if len(line) == 0 {
 				_ = fh.Close()
 				return fmt.Errorf("Expecting filename, but have a blank line.")
 			}
-			wantFilename = false
-			wantDescription = true
+
+			filename = line
 			continue
 		}
 
-		if wantDescription {
-			description = scanner.Text()
-			if len(description) == 0 {
-				_ = fh.Close()
-				return fmt.Errorf("Expecting description, but have a blank line.")
-			}
-			wantDescription = false
-			continue
-		}
-
-		// May have Tag line, or a blank line.
-
-		if strings.HasPrefix(scanner.Text(), "Tag: ") &&
-			len(scanner.Text()) > 5 {
-			rawTags := strings.Split(scanner.Text()[5:], ",")
-			for _, tag := range rawTags {
-				tags = append(tags, strings.TrimSpace(tag))
-			}
-			continue
-		}
-
-		if len(scanner.Text()) == 0 {
+		// Blank line ends a block describing one file.
+		if len(line) == 0 {
 			a.images = append(a.images, &Image{
-				Path:           path.Join(a.OrigImageDir, imageFilename),
-				Filename:       imageFilename,
+				Path:           path.Join(a.OrigImageDir, filename),
+				Filename:       filename,
 				Description:    description,
 				Tags:           tags,
 				ThumbnailSize:  a.ThumbnailSize,
 				LargeImageSize: a.LargeImageSize,
 			})
-			wantFilename = true
-			wantDescription = false
-			imageFilename = ""
+
+			filename = ""
 			description = ""
 			tags = nil
 			continue
 		}
 
-		_ = fh.Close()
-		return fmt.Errorf("Unexpected line in file: %s", scanner.Text())
-	}
+		if strings.HasPrefix(line, "Tag: ") && len(line) > 5 {
+			rawTags := strings.Split(line[5:], ",")
 
-	if scanner.Err() != nil {
-		_ = fh.Close()
-		return fmt.Errorf("Scan failure: %s", scanner.Err())
+			for _, tag := range rawTags {
+				tag = strings.TrimSpace(tag)
+				if len(tag) == 0 {
+					continue
+				}
+
+				tags = append(tags, tag)
+			}
+
+			continue
+		}
+
+		description = line
 	}
 
 	// May have one last file to store
-	if !wantFilename && !wantDescription {
+	if len(filename) > 0 {
 		a.images = append(a.images, &Image{
-			Path:           path.Join(a.OrigImageDir, imageFilename),
-			Filename:       imageFilename,
+			Path:           path.Join(a.OrigImageDir, filename),
+			Filename:       filename,
 			Description:    description,
 			Tags:           tags,
 			ThumbnailSize:  a.ThumbnailSize,
 			LargeImageSize: a.LargeImageSize,
 		})
+	}
+
+	if scanner.Err() != nil {
+		_ = fh.Close()
+		return fmt.Errorf("Scan failure: %s", scanner.Err())
 	}
 
 	err = fh.Close()
