@@ -1,4 +1,4 @@
-package main
+package gallery
 
 import (
 	"fmt"
@@ -67,7 +67,6 @@ func writeHTMLPage(totalPages int, totalImages int, page int,
 	if err != nil {
 		return fmt.Errorf("Unable to open HTML file: %s", err)
 	}
-	defer fh.Close()
 
 	previousURL := ""
 	if page > 1 {
@@ -101,7 +100,13 @@ func writeHTMLPage(totalPages int, totalImages int, page int,
 
 	err = t.Execute(fh, data)
 	if err != nil {
+		_ = fh.Close()
 		return fmt.Errorf("Unable to execute template: %s", err)
+	}
+
+	err = fh.Close()
+	if err != nil {
+		return fmt.Errorf("Close: %s", err)
 	}
 
 	log.Printf("Wrote HTML file: %s", filename)

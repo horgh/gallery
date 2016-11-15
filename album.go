@@ -1,4 +1,4 @@
-package main
+package gallery
 
 import (
 	"bufio"
@@ -12,6 +12,7 @@ import (
 type Album struct {
 	Images       []Image
 	ChosenImages []Image
+	PageSize     int
 }
 
 // parseMetaFile reads in a file listing images and parses it into memory.
@@ -26,7 +27,6 @@ func (a *Album) parseMetaFile(filename string) error {
 	if err != nil {
 		return fmt.Errorf("Unable to open: %s: %s", filename, err)
 	}
-	defer fh.Close()
 
 	scanner := bufio.NewScanner(fh)
 
@@ -40,6 +40,7 @@ func (a *Album) parseMetaFile(filename string) error {
 		if wantFilename {
 			imageFilename = scanner.Text()
 			if len(imageFilename) == 0 {
+				_ = fh.Close()
 				return fmt.Errorf("Expecting filename, but have a blank line.")
 			}
 			wantFilename = false
@@ -50,6 +51,7 @@ func (a *Album) parseMetaFile(filename string) error {
 		if wantDescription {
 			description = scanner.Text()
 			if len(description) == 0 {
+				_ = fh.Close()
 				return fmt.Errorf("Expecting description, but have a blank line.")
 			}
 			wantDescription = false
@@ -81,10 +83,12 @@ func (a *Album) parseMetaFile(filename string) error {
 			continue
 		}
 
+		_ = fh.Close()
 		return fmt.Errorf("Unexpected line in file: %s", scanner.Text())
 	}
 
 	if scanner.Err() != nil {
+		_ = fh.Close()
 		return fmt.Errorf("Scan failure: %s", scanner.Err())
 	}
 
@@ -95,6 +99,11 @@ func (a *Album) parseMetaFile(filename string) error {
 			Description: description,
 			Tags:        tags,
 		})
+	}
+
+	err = fh.Close()
+	if err != nil {
+		return fmt.Errorf("Close: %s", err)
 	}
 
 	return nil
@@ -191,8 +200,8 @@ func (a *Album) generateHTML(resizedImageDir string, thumbSize int,
 
 	page := 1
 
-	totalPages := len(a.ChosenImages) / pageSize
-	if len(a.ChosenImages)%pageSize > 0 {
+	totalPages := len(a.ChosenImages) / a.PageSize
+	if len(a.ChosenImages)%a.PageSize > 0 {
 		totalPages++
 	}
 
@@ -213,9 +222,9 @@ func (a *Album) generateHTML(resizedImageDir string, thumbSize int,
 			Description:   image.Description,
 		})
 
-		if len(htmlImages) == pageSize {
-			err = writeHTMLPage(totalPages, len(images), page, htmlImages, installDir,
-				title)
+		if len(htmlImages) == a.PageSize {
+			err := writeHTMLPage(totalPages, len(a.ChosenImages), page, htmlImages,
+				installDir, title)
 			if err != nil {
 				return fmt.Errorf("Unable to generate/write HTML: %s", err)
 			}
@@ -226,8 +235,8 @@ func (a *Album) generateHTML(resizedImageDir string, thumbSize int,
 	}
 
 	if len(htmlImages) > 0 {
-		err := writeHTMLPage(totalPages, len(images), page, htmlImages, installDir,
-			title)
+		err := writeHTMLPage(totalPages, len(a.ChosenImages), page, htmlImages,
+			installDir, title)
 		if err != nil {
 			return fmt.Errorf("Unable to generate/write HTML: %s", err)
 		}

@@ -1,4 +1,4 @@
-package main
+package gallery
 
 import (
 	"fmt"
@@ -12,17 +12,28 @@ func copyFile(src string, dest string) error {
 	if err != nil {
 		return fmt.Errorf("Unable to open file (read): %s", err)
 	}
-	defer srcFD.Close()
 
 	destFD, err := os.Create(dest)
 	if err != nil {
+		_ = srcFD.Close()
 		return fmt.Errorf("Unable to open file (write): %s", err)
 	}
-	defer destFD.Close()
 
 	_, err = io.Copy(destFD, srcFD)
 	if err != nil {
+		_ = srcFD.Close()
+		_ = destFD.Close()
 		return fmt.Errorf("Unable to copy file: %s", err)
+	}
+
+	err = srcFD.Close()
+	if err != nil {
+		return fmt.Errorf("Close: %s: %s", src, err)
+	}
+
+	err = destFD.Close()
+	if err != nil {
+		return fmt.Errorf("Close: %s: %s", dest, err)
 	}
 
 	return nil
