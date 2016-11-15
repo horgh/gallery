@@ -31,9 +31,11 @@ type Gallery struct {
 // Format of the gallery file: It is made of blocks that look like this:
 //
 // album-name = Name/title of an album
+// album-path = Path to the directory containing the album's images.
 // album-file = Path to a file describing the album's images.
 // album-tags = Comma separated list of tags to use to decide what images
-// from the album to include. If this is empty then we include all images.
+//              from the album to include. If this is empty then we include all
+//              images.
 func (g *Gallery) Load(file string) error {
 	fh, err := os.Open(file)
 	if err != nil {
@@ -43,6 +45,7 @@ func (g *Gallery) Load(file string) error {
 	scanner := bufio.NewScanner(fh)
 
 	albumName := ""
+	albumPath := ""
 	albumFile := ""
 	albumTags := ""
 
@@ -63,7 +66,7 @@ func (g *Gallery) Load(file string) error {
 
 		if pieces[0] == "album-name" {
 			if len(albumName) > 0 {
-				err := g.loadAlbum(albumName, albumFile, albumTags)
+				err := g.loadAlbum(albumName, albumPath, albumFile, albumTags)
 				if err != nil {
 					_ = fh.Close()
 					return err
@@ -71,6 +74,11 @@ func (g *Gallery) Load(file string) error {
 			}
 
 			albumName = pieces[1]
+			continue
+		}
+
+		if pieces[0] == "album-path" {
+			albumPath = pieces[1]
 			continue
 		}
 
@@ -88,7 +96,7 @@ func (g *Gallery) Load(file string) error {
 		return fmt.Errorf("Unexpected line in file: %s", text)
 	}
 
-	err = g.loadAlbum(albumName, albumFile, albumTags)
+	err = g.loadAlbum(albumName, albumPath, albumFile, albumTags)
 	if err != nil {
 		_ = fh.Close()
 		return err
@@ -106,9 +114,13 @@ func (g *Gallery) Load(file string) error {
 	return nil
 }
 
-func (g *Gallery) loadAlbum(name, file, tags string) error {
+func (g *Gallery) loadAlbum(name, path, file, tags string) error {
 	if len(name) == 0 {
 		return fmt.Errorf("Blank name")
+	}
+
+	if len(path) == 0 {
+		return fmt.Errorf("No path provided")
 	}
 
 	if len(file) == 0 {
@@ -116,8 +128,9 @@ func (g *Gallery) loadAlbum(name, file, tags string) error {
 	}
 
 	album := &Album{
-		Name: name,
-		File: file,
+		Name:         name,
+		OrigImageDir: path,
+		File:         file,
 	}
 
 	tagsRaw := strings.Split(tags, ",")

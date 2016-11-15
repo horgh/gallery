@@ -68,10 +68,13 @@ func main() {
 	}
 
 	album := gallery.Album{
-		File:     args.AlbumFile,
-		Name:     args.Title,
-		Tags:     args.Tags,
-		PageSize: 20,
+		File:         args.AlbumFile,
+		OrigImageDir: args.ImageDir,
+		ResizedDir:   args.ResizedImageDir,
+		InstallDir:   args.InstallDir,
+		Name:         args.Title,
+		Tags:         args.Tags,
+		PageSize:     20,
 	}
 
 	err = album.LoadAlbumFile()
@@ -84,20 +87,17 @@ func main() {
 		log.Fatalf("Unable to choose images: %s", err)
 	}
 
-	err = album.GenerateImages(args.ImageDir, args.ResizedImageDir,
-		args.ThumbSize, args.FullSize)
+	err = album.GenerateImages(args.ThumbSize, args.FullSize)
 	if err != nil {
 		log.Fatalf("Problem generating images: %s", err)
 	}
 
-	err = album.GenerateHTML(args.ResizedImageDir, args.ThumbSize,
-		args.FullSize, args.InstallDir)
+	err = album.GenerateHTML(args.ThumbSize, args.FullSize)
 	if err != nil {
 		log.Fatalf("Problem generating HTML: %s", err)
 	}
 
-	err = album.InstallImages(args.ResizedImageDir, args.ThumbSize, args.FullSize,
-		args.InstallDir)
+	err = album.InstallImages(args.ThumbSize, args.FullSize)
 	if err != nil {
 		log.Fatalf("Unable to install images: %s", err)
 	}
