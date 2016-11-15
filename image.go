@@ -178,13 +178,13 @@ func (i *Image) makeLargeImage(resizeDir string, verbose bool) error {
 	}
 
 	if image.Width() > image.Height() {
-		err := image.Resize(fmt.Sprintf("x%d", i.LargeImageSize))
+		err := image.Resize(fmt.Sprintf("%dx", i.LargeImageSize))
 		if err != nil {
 			_ = image.Destroy()
 			return fmt.Errorf("Unable to resize image: %s: %s", i.Filename, err)
 		}
 	} else {
-		err := image.Resize(fmt.Sprintf("%dx", i.LargeImageSize))
+		err := image.Resize(fmt.Sprintf("x%d", i.LargeImageSize))
 		if err != nil {
 			_ = image.Destroy()
 			return fmt.Errorf("Unable to resize image: %s: %s", i.Filename, err)
