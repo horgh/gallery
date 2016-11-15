@@ -1,9 +1,11 @@
 //
-// gallery is a program to create a static photo gallery website.
+// This program creates a static photo album website.
 //
 // You provide it a list of filenames and metadata about each, and where the
 // files are located. It generates HTML for a static site, and resizes the
 // images to create thumbnails as needed.
+//
+// This program creates a website with a single photo album.
 //
 package main
 
@@ -13,16 +15,15 @@ import (
 	"log"
 	"os"
 	"strings"
-)
 
-// pageSize defines how many images to have per page.
-const pageSize = 20
+	"summercat.com/gallery"
+)
 
 // Args holds the command line arguments.
 type Args struct {
-	// MetaFile is the path to a file describing each image. Its filename,
+	// AlbumFile is the path to a file describing each image. Its filename,
 	// descriptive text, and tags if any.
-	MetaFile string
+	AlbumFile string
 
 	// Tags, which may be empty, holds the tags of images to include in the
 	// build.
@@ -66,31 +67,33 @@ func main() {
 		os.Exit(1)
 	}
 
-	album := Album{}
+	album := gallery.Album{
+		PageSize: 20,
+	}
 
-	err = album.parseMetaFile(args.MetaFile)
+	err = album.LoadAlbumFile(args.AlbumFile)
 	if err != nil {
 		log.Fatalf("Unable to parse metadata file: %s", err)
 	}
 
-	err = album.chooseImages(args.Tags)
+	err = album.ChooseImages(args.Tags)
 	if err != nil {
 		log.Fatalf("Unable to choose images: %s", err)
 	}
 
-	err = album.generateImages(args.ImageDir, args.ResizedImageDir,
+	err = album.GenerateImages(args.ImageDir, args.ResizedImageDir,
 		args.ThumbSize, args.FullSize)
 	if err != nil {
 		log.Fatalf("Problem generating images: %s", err)
 	}
 
-	err = album.generateHTML(args.ResizedImageDir, args.ThumbSize,
+	err = album.GenerateHTML(args.ResizedImageDir, args.ThumbSize,
 		args.FullSize, args.InstallDir, args.Title)
 	if err != nil {
 		log.Fatalf("Problem generating HTML: %s", err)
 	}
 
-	err = album.installImages(args.ResizedImageDir, args.ThumbSize, args.FullSize,
+	err = album.InstallImages(args.ResizedImageDir, args.ThumbSize, args.FullSize,
 		args.InstallDir)
 	if err != nil {
 		log.Fatalf("Unable to install images: %s", err)
@@ -99,7 +102,7 @@ func main() {
 
 // getArgs retrieves and validates command line arguments.
 func getArgs() (Args, error) {
-	metaFile := flag.String("meta-file", "", "Path to the file describing and listing the images.")
+	albumFile := flag.String("album-file", "", "Path to the file describing and listing the images in an album.")
 	tagString := flag.String("tags", "", "Include images with these tag(s) only. Separate by commas. Optional.")
 	imageDir := flag.String("image-dir", "", "Path to the directory with all images.")
 	resizedImageDir := flag.String("resized-dir", "", "Path to the directory to hold resized images. We resize on demand.")
@@ -113,10 +116,10 @@ func getArgs() (Args, error) {
 
 	args := Args{}
 
-	if len(*metaFile) == 0 {
-		return Args{}, fmt.Errorf("You must provide a metadata file.")
+	if len(*albumFile) == 0 {
+		return Args{}, fmt.Errorf("You must provide an album file.")
 	}
-	args.MetaFile = *metaFile
+	args.AlbumFile = *albumFile
 
 	if len(*tagString) > 0 {
 		rawTags := strings.Split(*tagString, ",")

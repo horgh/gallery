@@ -38,3 +38,25 @@ func copyFile(src string, dest string) error {
 
 	return nil
 }
+
+func makeDirIfNotExist(dir string) error {
+	fi, err := os.Stat(dir)
+	if err != nil {
+		if !os.IsNotExist(err) {
+			return fmt.Errorf("%s: %s", dir, err)
+		}
+
+		err := os.Mkdir(dir, 0755)
+		if err != nil {
+			return fmt.Errorf("Mkdir: %s: %s", dir, err)
+		}
+
+		return nil
+	}
+
+	if !fi.IsDir() {
+		return fmt.Errorf("File exists but is not a dir: %s", dir)
+	}
+
+	return nil
+}

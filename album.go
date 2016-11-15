@@ -15,14 +15,15 @@ type Album struct {
 	PageSize     int
 }
 
-// parseMetaFile reads in a file listing images and parses it into memory.
+// LoadAlbumFile parses a file listing images and information about them.
+//
 // Format:
 // filename\n
 // Description\n
 // Optional: Tag: comma separated tags\n
 // Blank line
 // Then should come the next filename, or end of file.
-func (a *Album) parseMetaFile(filename string) error {
+func (a *Album) LoadAlbumFile(filename string) error {
 	fh, err := os.Open(filename)
 	if err != nil {
 		return fmt.Errorf("Unable to open: %s: %s", filename, err)
@@ -109,11 +110,11 @@ func (a *Album) parseMetaFile(filename string) error {
 	return nil
 }
 
-// chooseImages decides which images we will include when we build the HTML.
+// ChooseImages decides which images we will include when we build the HTML.
 //
 // The basis for this choice is whether the image has one of the requested tags
 // or not.
-func (a *Album) chooseImages(tags []string) error {
+func (a *Album) ChooseImages(tags []string) error {
 	// No tags wanted? Then include everything.
 	if len(tags) == 0 {
 		a.ChosenImages = a.Images
@@ -132,15 +133,21 @@ func (a *Album) chooseImages(tags []string) error {
 	return nil
 }
 
-// generateImages creates smaller images than the raw ones for use in the HTML
+// GenerateImages creates smaller images than the raw ones for use in the HTML
 // page.
+//
 // This includes one that is "full size" (but still smaller) and one that is a
-// thumbnail. We link to the full size one from the main page.
-// We place the resized images in the thumbs directory.
-// We only resize if the resized image is not already present.
-// We do this only for chosen images.
-func (a *Album) generateImages(imageDir string, resizedImageDir string,
+// thumbnail. We link to the full size one from the main page. We place the
+// resized images in the thumbs directory. We only resize if the resized image
+// is not already present. We do this only for chosen images.
+func (a *Album) GenerateImages(imageDir string, resizedImageDir string,
 	thumbSize int, fullSize int) error {
+
+	err := makeDirIfNotExist(resizedImageDir)
+	if err != nil {
+		return err
+	}
+
 	for _, image := range a.ChosenImages {
 		err := image.shrink(thumbSize, imageDir, resizedImageDir)
 		if err != nil {
@@ -156,10 +163,16 @@ func (a *Album) generateImages(imageDir string, resizedImageDir string,
 	return nil
 }
 
-// installImages copies the chosen images from the resized directory into the
+// InstallImages copies the chosen images from the resized directory into the
 // install directory.
-func (a *Album) installImages(resizedImageDir string, thumbSize int,
+func (a *Album) InstallImages(resizedImageDir string, thumbSize int,
 	fullSize int, installDir string) error {
+
+	err := makeDirIfNotExist(installDir)
+	if err != nil {
+		return err
+	}
+
 	for _, image := range a.ChosenImages {
 		thumb, err := image.getResizedFilename(thumbSize, resizedImageDir)
 		if err != nil {
@@ -191,11 +204,17 @@ func (a *Album) installImages(resizedImageDir string, thumbSize int,
 	return nil
 }
 
-// generateHTML does just that!
+// GenerateHTML does just that!
 //
 // Split over several pages if necessary.
-func (a *Album) generateHTML(resizedImageDir string, thumbSize int,
+func (a *Album) GenerateHTML(resizedImageDir string, thumbSize int,
 	fullSize int, installDir string, title string) error {
+
+	err := makeDirIfNotExist(installDir)
+	if err != nil {
+		return err
+	}
+
 	var htmlImages []HTMLImage
 
 	page := 1

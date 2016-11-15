@@ -37,6 +37,7 @@ func (i Image) hasTag(tag string) bool {
 // For the percentage to use, it really depends on the images you have.
 func (i Image) shrink(percent int, imageDir string,
 	resizedImageDir string) error {
+
 	newFilename, err := i.getResizedFilename(percent, resizedImageDir)
 	if err != nil {
 		return fmt.Errorf("Unable to determine path to file: %s", err)
