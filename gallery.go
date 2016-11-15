@@ -10,6 +10,9 @@ import (
 // Gallery holds information about a full gallery site which contains 1 or
 // more albums of images.
 type Gallery struct {
+	// File describing the gallery and its albums.
+	File string
+
 	// Directory where we output resized images.
 	ResizedDir string
 
@@ -21,10 +24,21 @@ type Gallery struct {
 	Name string
 
 	// Albums in the gallery.
-	Albums []*Album
+	albums []*Album
 }
 
-// Load a gallery's information from a gallery file.
+// Install loads gallery/albums information. It then resizes the images as
+// needed, and generates and installs the HTML/images.
+func (g *Gallery) Install() error {
+	err := g.load(g.File)
+	if err != nil {
+		return fmt.Errorf("Unable to load gallery file: %s", err)
+	}
+
+	return nil
+}
+
+// load a gallery's information from a gallery file.
 //
 // This loads all of the gallery's albums too.
 //
@@ -36,7 +50,7 @@ type Gallery struct {
 // album-tags = Comma separated list of tags to use to decide what images
 //              from the album to include. If this is empty then we include all
 //              images.
-func (g *Gallery) Load(file string) error {
+func (g *Gallery) load(file string) error {
 	fh, err := os.Open(file)
 	if err != nil {
 		return err
@@ -148,7 +162,7 @@ func (g *Gallery) loadAlbum(name, path, file, tags string) error {
 		return err
 	}
 
-	g.Albums = append(g.Albums, album)
+	g.albums = append(g.albums, album)
 
 	return nil
 }
