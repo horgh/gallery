@@ -66,8 +66,8 @@ func main() {
 
 func getArgs() (*Args, error) {
 	galleryFile := flag.String("gallery-file", "", "Path to a file describing the gallery to build.")
-	resizedDir := flag.String("resized-dir", "", "Path to a directory to store resized images.")
 	installDir := flag.String("install-dir", "", "Path to a directory to output HTML/images.")
+	resizedDir := flag.String("resized-dir", "", "Path to a directory to store resized images. If not given, output directly to the install directory.")
 	title := flag.String("title", "Gallery", "Name/title of the gallery.")
 	verbose := flag.Bool("verbose", false, "Toggle verbose logging.")
 	pageSize := flag.Int("page-size", 20, "Number of image thumbnails per page in albums.")
@@ -79,12 +79,12 @@ func getArgs() (*Args, error) {
 		return nil, fmt.Errorf("You must provide a gallery file.")
 	}
 
-	if len(*resizedDir) == 0 {
-		return nil, fmt.Errorf("You must provide a resized image directory.")
-	}
-
 	if len(*installDir) == 0 {
 		return nil, fmt.Errorf("You must provide an install directory.")
+	}
+
+	if len(*resizedDir) == 0 {
+		*resizedDir = *installDir
 	}
 
 	if len(*title) == 0 {

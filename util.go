@@ -8,6 +8,10 @@ import (
 
 // copyFile copies the file!
 func copyFile(src string, dest string) error {
+	if src == dest {
+		return nil
+	}
+
 	srcFD, err := os.Open(src)
 	if err != nil {
 		return fmt.Errorf("Unable to open file (read): %s", err)
