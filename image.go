@@ -70,45 +70,22 @@ func (i *Image) makeImages(resizeDir string, verbose bool) error {
 }
 
 func (i *Image) makeThumbnail(resizeDir string, verbose bool) error {
-	imagePath, err := i.resize(resizeDir, i.ThumbnailSize, verbose)
+	resizeFile, err := i.getResizedFilename(resizeDir, i.ThumbnailSize,
+		i.ThumbnailSize)
 	if err != nil {
 		return err
-	}
-
-	i.ThumbnailPath = imagePath
-	i.ThumbnailFilename = path.Base(imagePath)
-
-	return nil
-}
-
-func (i *Image) makeLargeImage(resizeDir string, verbose bool) error {
-	imagePath, err := i.resize(resizeDir, i.LargeImageSize, verbose)
-	if err != nil {
-		return err
-	}
-
-	i.LargeImagePath = imagePath
-	i.LargeImageFilename = path.Base(imagePath)
-
-	return nil
-}
-
-func (i Image) resize(resizeDir string, width int,
-	verbose bool) (string, error) {
-
-	resizeFile, err := i.getResizedFilename(resizeDir, width)
-	if err != nil {
-		return "", err
 	}
 
 	// If the resized version exists, nothing to do.
 	_, err = os.Stat(resizeFile)
 	if err == nil {
-		return resizeFile, nil
+		i.ThumbnailPath = resizeFile
+		i.ThumbnailFilename = path.Base(resizeFile)
+		return nil
 	}
 
 	if !os.IsNotExist(err) {
-		return "", fmt.Errorf("Stat: %s %s", resizeFile, err)
+		return fmt.Errorf("Stat: %s %s", resizeFile, err)
 	}
 
 	if verbose {
@@ -117,40 +94,138 @@ func (i Image) resize(resizeDir string, width int,
 
 	image, err := magick.NewFromFile(i.Path)
 	if err != nil {
-		return "", fmt.Errorf("Unable to open image: %s: %s", i.Filename, err)
+		return fmt.Errorf("Unable to open image: %s: %s", i.Filename, err)
 	}
 
-	err = image.Resize(fmt.Sprintf("%dx", width))
+	if image.Width() > image.Height() {
+		err := image.Resize(fmt.Sprintf("x%d", i.ThumbnailSize))
+		if err != nil {
+			_ = image.Destroy()
+			return fmt.Errorf("Unable to resize image: %s: %s", i.Filename, err)
+		}
+	} else {
+		err := image.Resize(fmt.Sprintf("%dx", i.ThumbnailSize))
+		if err != nil {
+			_ = image.Destroy()
+			return fmt.Errorf("Unable to resize image: %s: %s", i.Filename, err)
+		}
+	}
+
+	// Crop the image. Try to centre depending on which dimension is larger.
+	xOffset := 0
+	yOffset := 0
+
+	if image.Width() > image.Height() {
+		diff := image.Width() - image.Height()
+		xOffset = diff / 2
+	} else if image.Height() > image.Height() {
+		diff := image.Height() - image.Width()
+		yOffset = diff / 2
+	}
+
+	// ! says to ignore aspect ratio.
+	geometry := fmt.Sprintf("%dx%d!+%d+%d", i.ThumbnailSize, i.ThumbnailSize,
+		xOffset, yOffset)
+
+	err = image.Crop(geometry)
 	if err != nil {
 		_ = image.Destroy()
-		return "", fmt.Errorf("Unable to resize image: %s: %s", i.Filename, err)
+		return fmt.Errorf("Unable to crop: %s: %s", i.Filename, err)
 	}
 
 	err = image.ToFile(resizeFile)
 	if err != nil {
 		_ = image.Destroy()
-		return "", fmt.Errorf("Unable to save resized image: %s: %s", resizeFile,
-			err)
+		return fmt.Errorf("Unable to save resized image: %s: %s", resizeFile, err)
 	}
 
 	err = image.Destroy()
 	if err != nil {
-		return "", fmt.Errorf("Unable to clean up: %s", err)
+		return fmt.Errorf("Unable to clean up: %s", err)
 	}
 
-	return resizeFile, nil
+	i.ThumbnailPath = resizeFile
+	i.ThumbnailFilename = path.Base(resizeFile)
+
+	return nil
+}
+
+func (i *Image) makeLargeImage(resizeDir string, verbose bool) error {
+	resizeFile, err := i.getResizedFilename(resizeDir, i.LargeImageSize, -1)
+	if err != nil {
+		return err
+	}
+
+	// If the resized version exists, nothing to do.
+	_, err = os.Stat(resizeFile)
+	if err == nil {
+		i.LargeImagePath = resizeFile
+		i.LargeImageFilename = path.Base(resizeFile)
+		return nil
+	}
+
+	if !os.IsNotExist(err) {
+		return fmt.Errorf("Stat: %s %s", resizeFile, err)
+	}
+
+	if verbose {
+		log.Printf("Creating image %s...", resizeFile)
+	}
+
+	image, err := magick.NewFromFile(i.Path)
+	if err != nil {
+		return fmt.Errorf("Unable to open image: %s: %s", i.Filename, err)
+	}
+
+	if image.Width() > image.Height() {
+		err := image.Resize(fmt.Sprintf("x%d", i.LargeImageSize))
+		if err != nil {
+			_ = image.Destroy()
+			return fmt.Errorf("Unable to resize image: %s: %s", i.Filename, err)
+		}
+	} else {
+		err := image.Resize(fmt.Sprintf("%dx", i.LargeImageSize))
+		if err != nil {
+			_ = image.Destroy()
+			return fmt.Errorf("Unable to resize image: %s: %s", i.Filename, err)
+		}
+	}
+
+	err = image.ToFile(resizeFile)
+	if err != nil {
+		_ = image.Destroy()
+		return fmt.Errorf("Unable to save resized image: %s: %s", resizeFile, err)
+	}
+
+	err = image.Destroy()
+	if err != nil {
+		return fmt.Errorf("Unable to clean up: %s", err)
+	}
+
+	i.LargeImagePath = resizeFile
+	i.LargeImageFilename = path.Base(resizeFile)
+
+	return nil
 }
 
 // getResizedFilename gets the filename and path to the file with the given
 // width.
-func (i Image) getResizedFilename(dir string, width int) (string, error) {
+func (i Image) getResizedFilename(dir string, width, height int) (string, error) {
 	namePieces := strings.Split(i.Filename, ".")
 
 	if len(namePieces) != 2 {
 		return "", fmt.Errorf("Unexpected filename format")
 	}
 
-	newName := fmt.Sprintf("%s_%d.%s", namePieces[0], width, namePieces[1])
+	// -1 if the width/height is auto. Width/height will be width depending on
+	// which is larger.
+	newName := ""
+	if height != -1 {
+		newName = fmt.Sprintf("%s_%d_%d.%s", namePieces[0], width, height,
+			namePieces[1])
+	} else {
+		newName = fmt.Sprintf("%s_%d.%s", namePieces[0], width, namePieces[1])
+	}
 
 	return path.Join(dir, newName), nil
 }
