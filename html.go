@@ -5,7 +5,6 @@ import (
 	"html/template"
 	"log"
 	"os"
-	"path/filepath"
 )
 
 // HTMLImage holds image info needed in HTML.
@@ -13,60 +12,6 @@ type HTMLImage struct {
 	FullImageURL  string
 	ThumbImageURL string
 	Description   string
-}
-
-// generateHTML does just that!
-//
-// Split over several pages if necessary.
-func generateHTML(images []Image, resizedImageDir string, thumbSize int,
-	fullSize int, installDir string, title string) error {
-	var htmlImages []HTMLImage
-
-	page := 1
-
-	totalPages := len(images) / pageSize
-	if len(images)%pageSize > 0 {
-		totalPages++
-	}
-
-	for _, img := range images {
-		thumbFilename, err := img.getResizedFilename(thumbSize, resizedImageDir)
-		if err != nil {
-			return fmt.Errorf("Unable to determine thumbnail filename: %s", err)
-		}
-
-		fullFilename, err := img.getResizedFilename(fullSize, resizedImageDir)
-		if err != nil {
-			return fmt.Errorf("Unable to determine full image filename: %s", err)
-		}
-
-		htmlImages = append(htmlImages, HTMLImage{
-			FullImageURL:  filepath.Base(fullFilename),
-			ThumbImageURL: filepath.Base(thumbFilename),
-			Description:   img.Description,
-		})
-
-		if len(htmlImages) == pageSize {
-			err = writeHTMLPage(totalPages, len(images), page, htmlImages, installDir,
-				title)
-			if err != nil {
-				return fmt.Errorf("Unable to generate/write HTML: %s", err)
-			}
-
-			htmlImages = nil
-			page++
-		}
-	}
-
-	if len(htmlImages) > 0 {
-		err := writeHTMLPage(totalPages, len(images), page, htmlImages, installDir,
-			title)
-		if err != nil {
-			return fmt.Errorf("Unable to generate/write HTML: %s", err)
-		}
-	}
-
-	return nil
 }
 
 // writeHTMLPage generates and writes an HTML page for the given set of images.

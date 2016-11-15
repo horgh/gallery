@@ -8,12 +8,10 @@
 package main
 
 import (
-	"bufio"
 	"flag"
 	"fmt"
 	"log"
 	"os"
-	"path/filepath"
 	"strings"
 )
 
@@ -68,49 +66,35 @@ func main() {
 		os.Exit(1)
 	}
 
-	images, err := parseMetaFile(args.MetaFile)
+	album := Album{}
+
+	err = album.parseMetaFile(args.MetaFile)
 	if err != nil {
 		log.Fatalf("Unable to parse metadata file: %s", err)
 	}
 
-	if args.Verbose {
-		log.Printf("Parsed %d images", len(images))
-		for _, v := range images {
-			log.Printf("Image: %s", v)
-		}
-	}
-
-	chosenImages, err := chooseImages(args.Tags, images)
+	err = album.chooseImages(args.Tags)
 	if err != nil {
 		log.Fatalf("Unable to choose images: %s", err)
 	}
-	log.Printf("Chose %d images", len(chosenImages))
-	for _, v := range chosenImages {
-		log.Printf("Image: %s", v)
-	}
 
-	// Generate resized images for all chosen images.
-	err = generateImages(args.ImageDir, args.ResizedImageDir,
-		args.ThumbSize, args.FullSize, chosenImages)
+	err = album.generateImages(args.ImageDir, args.ResizedImageDir,
+		args.ThumbSize, args.FullSize)
 	if err != nil {
 		log.Fatalf("Problem generating images: %s", err)
 	}
 
-	// Generate HTML with chosen images
-	err = generateHTML(chosenImages, args.ResizedImageDir, args.ThumbSize,
+	err = album.generateHTML(args.ResizedImageDir, args.ThumbSize,
 		args.FullSize, args.InstallDir, args.Title)
 	if err != nil {
 		log.Fatalf("Problem generating HTML: %s", err)
 	}
 
-	// Copy resized images to the install directory
-	err = installImages(chosenImages, args.ResizedImageDir, args.ThumbSize,
-		args.FullSize, args.InstallDir)
+	err = album.installImages(args.ResizedImageDir, args.ThumbSize, args.FullSize,
+		args.InstallDir)
 	if err != nil {
 		log.Fatalf("Unable to install images: %s", err)
 	}
-
-	log.Printf("Done!")
 }
 
 // getArgs retrieves and validates command line arguments.
@@ -174,174 +158,4 @@ func getArgs() (Args, error) {
 	args.Title = *title
 
 	return args, nil
-}
-
-// parseMetaFile reads in a file listing images and parses it into memory.
-// Format:
-// filename\n
-// Description\n
-// Optional: Tag: comma separated tags\n
-// Blank line
-// Then should come the next filename, or end of file.
-func parseMetaFile(filename string) ([]Image, error) {
-	fh, err := os.Open(filename)
-	if err != nil {
-		return nil, fmt.Errorf("Unable to open: %s: %s", filename, err)
-	}
-	defer fh.Close()
-
-	scanner := bufio.NewScanner(fh)
-
-	var images []Image
-
-	wantFilename := true
-	wantDescription := false
-	imageFilename := ""
-	description := ""
-	var tags []string
-
-	for scanner.Scan() {
-		if wantFilename {
-			imageFilename = scanner.Text()
-			if len(imageFilename) == 0 {
-				return nil, fmt.Errorf("Expecting filename, but have a blank line.")
-			}
-			wantFilename = false
-			wantDescription = true
-			continue
-		}
-
-		if wantDescription {
-			description = scanner.Text()
-			if len(description) == 0 {
-				return nil, fmt.Errorf("Expecting description, but have a blank line.")
-			}
-			wantDescription = false
-			continue
-		}
-
-		// May have Tag line, or a blank line.
-
-		if strings.HasPrefix(scanner.Text(), "Tag: ") &&
-			len(scanner.Text()) > 5 {
-			rawTags := strings.Split(scanner.Text()[5:], ",")
-			for _, tag := range rawTags {
-				tags = append(tags, strings.TrimSpace(tag))
-			}
-			continue
-		}
-
-		if len(scanner.Text()) == 0 {
-			images = append(images, Image{
-				Filename:    imageFilename,
-				Description: description,
-				Tags:        tags,
-			})
-			wantFilename = true
-			wantDescription = false
-			filename = ""
-			description = ""
-			tags = nil
-			continue
-		}
-
-		return nil, fmt.Errorf("Unexpected line in file: %s", scanner.Text())
-	}
-
-	if scanner.Err() != nil {
-		return nil, fmt.Errorf("Scan failure: %s", scanner.Err())
-	}
-
-	// May have one last file to store
-	if !wantFilename && !wantDescription {
-		images = append(images, Image{
-			Filename:    imageFilename,
-			Description: description,
-			Tags:        tags,
-		})
-	}
-
-	return images, nil
-}
-
-// chooseImages decides which images we will include when we build the HTML.
-//
-// The basis for this choice is whether the image has one of the requested tags
-// or not.
-func chooseImages(tags []string, images []Image) ([]Image, error) {
-	// No tags wanted? Then include everything.
-	if len(tags) == 0 {
-		return images, nil
-	}
-
-	var chosenImages []Image
-
-	for _, image := range images {
-		for _, wantedTag := range tags {
-			if image.hasTag(wantedTag) {
-				chosenImages = append(chosenImages, image)
-				break
-			}
-		}
-	}
-
-	return chosenImages, nil
-}
-
-// generateImages creates smaller images than the raw ones for use in the HTML
-// page.
-// This includes one that is "full size" (but still smaller) and one that is a
-// thumbnail. We link to the full size one from the main page.
-// We place the resized images in the thumbs directory.
-// We only resize if the resized image is not already present.
-func generateImages(imageDir string, resizedImageDir string, thumbSize int,
-	fullSize int, images []Image) error {
-	for _, image := range images {
-		err := image.shrink(thumbSize, imageDir, resizedImageDir)
-		if err != nil {
-			return fmt.Errorf("Unable to resize to %d%%: %s", thumbSize, err)
-		}
-
-		err = image.shrink(fullSize, imageDir, resizedImageDir)
-		if err != nil {
-			return fmt.Errorf("Unable to resize to %d%%: %s", fullSize, err)
-		}
-	}
-
-	return nil
-}
-
-// installImages copies the chosen images from the resized directory into the
-// install directory.
-func installImages(images []Image, resizedImageDir string, thumbSize int,
-	fullSize int, installDir string) error {
-	for _, image := range images {
-		thumb, err := image.getResizedFilename(thumbSize, resizedImageDir)
-		if err != nil {
-			return fmt.Errorf("Unable to determine thumbnail filename: %s", err)
-		}
-
-		full, err := image.getResizedFilename(fullSize, resizedImageDir)
-		if err != nil {
-			return fmt.Errorf("Unable to determine full size filename: %s", err)
-		}
-
-		thumbTarget := fmt.Sprintf("%s%c%s", installDir, os.PathSeparator,
-			filepath.Base(thumb))
-
-		fullTarget := fmt.Sprintf("%s%c%s", installDir, os.PathSeparator,
-			filepath.Base(full))
-
-		err = copyFile(thumb, thumbTarget)
-		if err != nil {
-			return fmt.Errorf("Unable to copy %s to %s: %s", thumb, thumbTarget, err)
-		}
-
-		err = copyFile(full, fullTarget)
-		if err != nil {
-			return fmt.Errorf("Unable to copy %s to %s: %s", full, fullTarget, err)
-		}
-	}
-
-	return nil
 }
