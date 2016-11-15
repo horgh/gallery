@@ -74,6 +74,8 @@ func main() {
 		InstallDir:   args.InstallDir,
 		Name:         args.Title,
 		Tags:         args.Tags,
+		ThumbSize:    args.ThumbSize,
+		FullSize:     args.FullSize,
 		PageSize:     20,
 	}
 
@@ -87,17 +89,17 @@ func main() {
 		log.Fatalf("Unable to choose images: %s", err)
 	}
 
-	err = album.GenerateImages(args.ThumbSize, args.FullSize)
+	err = album.GenerateImages()
 	if err != nil {
 		log.Fatalf("Problem generating images: %s", err)
 	}
 
-	err = album.GenerateHTML(args.ThumbSize, args.FullSize)
+	err = album.GenerateHTML()
 	if err != nil {
 		log.Fatalf("Problem generating HTML: %s", err)
 	}
 
-	err = album.InstallImages(args.ThumbSize, args.FullSize)
+	err = album.InstallImages()
 	if err != nil {
 		log.Fatalf("Unable to install images: %s", err)
 	}

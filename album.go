@@ -35,6 +35,12 @@ type Album struct {
 	// A subset of the available images. Those chosen based on tags.
 	ChosenImages []Image
 
+	// Image thumb size. Percent.
+	ThumbSize int
+
+	// Image "full" size. Percent.
+	FullSize int
+
 	// How many images per page.
 	PageSize int
 }
@@ -166,22 +172,21 @@ func (a *Album) ChooseImages() error {
 // thumbnail. We link to the full size one from the main page. We place the
 // resized images in the thumbs directory. We only resize if the resized image
 // is not already present. We do this only for chosen images.
-func (a *Album) GenerateImages(thumbSize, fullSize int) error {
-
+func (a *Album) GenerateImages() error {
 	err := makeDirIfNotExist(a.ResizedDir)
 	if err != nil {
 		return err
 	}
 
 	for _, image := range a.ChosenImages {
-		err := image.shrink(thumbSize, a.OrigImageDir, a.ResizedDir)
+		err := image.shrink(a.ThumbSize, a.OrigImageDir, a.ResizedDir)
 		if err != nil {
-			return fmt.Errorf("Unable to resize to %d%%: %s", thumbSize, err)
+			return fmt.Errorf("Unable to resize to %d%%: %s", a.ThumbSize, err)
 		}
 
-		err = image.shrink(fullSize, a.OrigImageDir, a.ResizedDir)
+		err = image.shrink(a.FullSize, a.OrigImageDir, a.ResizedDir)
 		if err != nil {
-			return fmt.Errorf("Unable to resize to %d%%: %s", fullSize, err)
+			return fmt.Errorf("Unable to resize to %d%%: %s", a.FullSize, err)
 		}
 	}
 
@@ -190,20 +195,19 @@ func (a *Album) GenerateImages(thumbSize, fullSize int) error {
 
 // InstallImages copies the chosen images from the resized directory into the
 // install directory.
-func (a *Album) InstallImages(thumbSize, fullSize int) error {
-
+func (a *Album) InstallImages() error {
 	err := makeDirIfNotExist(a.InstallDir)
 	if err != nil {
 		return err
 	}
 
 	for _, image := range a.ChosenImages {
-		thumb, err := image.getResizedFilename(thumbSize, a.ResizedDir)
+		thumb, err := image.getResizedFilename(a.ThumbSize, a.ResizedDir)
 		if err != nil {
 			return fmt.Errorf("Unable to determine thumbnail filename: %s", err)
 		}
 
-		full, err := image.getResizedFilename(fullSize, a.ResizedDir)
+		full, err := image.getResizedFilename(a.FullSize, a.ResizedDir)
 		if err != nil {
 			return fmt.Errorf("Unable to determine full size filename: %s", err)
 		}
@@ -231,8 +235,7 @@ func (a *Album) InstallImages(thumbSize, fullSize int) error {
 // GenerateHTML does just that!
 //
 // Split over several pages if necessary.
-func (a *Album) GenerateHTML(thumbSize, fullSize int) error {
-
+func (a *Album) GenerateHTML() error {
 	err := makeDirIfNotExist(a.InstallDir)
 	if err != nil {
 		return err
@@ -248,12 +251,12 @@ func (a *Album) GenerateHTML(thumbSize, fullSize int) error {
 	}
 
 	for _, image := range a.ChosenImages {
-		thumbFilename, err := image.getResizedFilename(thumbSize, a.ResizedDir)
+		thumbFilename, err := image.getResizedFilename(a.ThumbSize, a.ResizedDir)
 		if err != nil {
 			return fmt.Errorf("Unable to determine thumbnail filename: %s", err)
 		}
 
-		fullFilename, err := image.getResizedFilename(fullSize, a.ResizedDir)
+		fullFilename, err := image.getResizedFilename(a.FullSize, a.ResizedDir)
 		if err != nil {
 			return fmt.Errorf("Unable to determine full image filename: %s", err)
 		}
