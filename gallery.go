@@ -35,12 +35,20 @@ func (g *Gallery) Install() error {
 		return fmt.Errorf("Unable to load gallery file: %s", err)
 	}
 
+	for _, album := range g.albums {
+		err := album.Install()
+		if err != nil {
+			return fmt.Errorf("Unable to install album: %s: %s", album.Name,
+				err)
+		}
+	}
+
+	// Build and install top level gallery HTML.
+
 	return nil
 }
 
 // load a gallery's information from a gallery file.
-//
-// This loads all of the gallery's albums too.
 //
 // Format of the gallery file: It is made of blocks that look like this:
 //
@@ -143,8 +151,11 @@ func (g *Gallery) loadAlbum(name, path, file, tags string) error {
 
 	album := &Album{
 		Name:         name,
-		OrigImageDir: path,
 		File:         file,
+		OrigImageDir: path,
+		ResizedDir:   g.ResizedDir,
+		InstallDir:   g.InstallDir,
+		PageSize:     20,
 	}
 
 	tagsRaw := strings.Split(tags, ",")
@@ -155,11 +166,6 @@ func (g *Gallery) loadAlbum(name, path, file, tags string) error {
 		}
 
 		album.Tags = append(album.Tags, tag)
-	}
-
-	err := album.LoadAlbumFile()
-	if err != nil {
-		return err
 	}
 
 	g.albums = append(g.albums, album)

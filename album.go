@@ -3,6 +3,7 @@ package gallery
 import (
 	"bufio"
 	"fmt"
+	"math/rand"
 	"os"
 	"path/filepath"
 	"strings"
@@ -319,4 +320,10 @@ func (a *Album) GenerateHTML() error {
 	}
 
 	return nil
+}
+
+// GetThumb picks a thumbnail to represent the album.
+func (a *Album) GetThumb() Image {
+	i := rand.Int() % len(a.chosenImages)
+	return a.chosenImages[i]
 }
