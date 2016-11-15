@@ -29,12 +29,6 @@ type Album struct {
 	// no tags specified, then include all images.
 	Tags []string
 
-	// All available images. Parsed from the album file.
-	Images []Image
-
-	// A subset of the available images. Those chosen based on tags.
-	ChosenImages []Image
-
 	// Image thumb size. Percent.
 	ThumbSize int
 
@@ -43,6 +37,12 @@ type Album struct {
 
 	// How many images per page.
 	PageSize int
+
+	// All available images. Parsed from the album file.
+	images []Image
+
+	// A subset of the available images. Those chosen based on tags.
+	chosenImages []Image
 }
 
 // LoadAlbumFile parses a file listing images and information about them.
@@ -103,7 +103,7 @@ func (a *Album) LoadAlbumFile() error {
 		}
 
 		if len(scanner.Text()) == 0 {
-			a.Images = append(a.Images, Image{
+			a.images = append(a.images, Image{
 				Filename:    imageFilename,
 				Description: description,
 				Tags:        tags,
@@ -127,7 +127,7 @@ func (a *Album) LoadAlbumFile() error {
 
 	// May have one last file to store
 	if !wantFilename && !wantDescription {
-		a.Images = append(a.Images, Image{
+		a.images = append(a.images, Image{
 			Filename:    imageFilename,
 			Description: description,
 			Tags:        tags,
@@ -142,6 +142,37 @@ func (a *Album) LoadAlbumFile() error {
 	return nil
 }
 
+// Install loads image information, and then chooses, resizes, builds HTML, and
+// installs the HTML and images.
+func (a *Album) Install() error {
+	err := a.LoadAlbumFile()
+	if err != nil {
+		return fmt.Errorf("Unable to parse metadata file: %s", err)
+	}
+
+	err = a.ChooseImages()
+	if err != nil {
+		return fmt.Errorf("Unable to choose images: %s", err)
+	}
+
+	err = a.GenerateImages()
+	if err != nil {
+		return fmt.Errorf("Problem generating images: %s", err)
+	}
+
+	err = a.GenerateHTML()
+	if err != nil {
+		return fmt.Errorf("Problem generating HTML: %s", err)
+	}
+
+	err = a.InstallImages()
+	if err != nil {
+		return fmt.Errorf("Unable to install images: %s", err)
+	}
+
+	return nil
+}
+
 // ChooseImages decides which images we will include when we build the HTML.
 //
 // The basis for this choice is whether the image has one of the requested tags
@@ -149,14 +180,14 @@ func (a *Album) LoadAlbumFile() error {
 func (a *Album) ChooseImages() error {
 	// No tags wanted? Then include everything.
 	if len(a.Tags) == 0 {
-		a.ChosenImages = a.Images
+		a.chosenImages = a.images
 		return nil
 	}
 
-	for _, image := range a.Images {
+	for _, image := range a.images {
 		for _, wantedTag := range a.Tags {
 			if image.hasTag(wantedTag) {
-				a.ChosenImages = append(a.ChosenImages, image)
+				a.chosenImages = append(a.chosenImages, image)
 				break
 			}
 		}
@@ -178,7 +209,7 @@ func (a *Album) GenerateImages() error {
 		return err
 	}
 
-	for _, image := range a.ChosenImages {
+	for _, image := range a.chosenImages {
 		err := image.shrink(a.ThumbSize, a.OrigImageDir, a.ResizedDir)
 		if err != nil {
 			return fmt.Errorf("Unable to resize to %d%%: %s", a.ThumbSize, err)
@@ -201,7 +232,7 @@ func (a *Album) InstallImages() error {
 		return err
 	}
 
-	for _, image := range a.ChosenImages {
+	for _, image := range a.chosenImages {
 		thumb, err := image.getResizedFilename(a.ThumbSize, a.ResizedDir)
 		if err != nil {
 			return fmt.Errorf("Unable to determine thumbnail filename: %s", err)
@@ -245,12 +276,12 @@ func (a *Album) GenerateHTML() error {
 
 	page := 1
 
-	totalPages := len(a.ChosenImages) / a.PageSize
-	if len(a.ChosenImages)%a.PageSize > 0 {
+	totalPages := len(a.chosenImages) / a.PageSize
+	if len(a.chosenImages)%a.PageSize > 0 {
 		totalPages++
 	}
 
-	for _, image := range a.ChosenImages {
+	for _, image := range a.chosenImages {
 		thumbFilename, err := image.getResizedFilename(a.ThumbSize, a.ResizedDir)
 		if err != nil {
 			return fmt.Errorf("Unable to determine thumbnail filename: %s", err)
@@ -268,7 +299,7 @@ func (a *Album) GenerateHTML() error {
 		})
 
 		if len(htmlImages) == a.PageSize {
-			err := writeHTMLPage(totalPages, len(a.ChosenImages), page, htmlImages,
+			err := writeHTMLPage(totalPages, len(a.chosenImages), page, htmlImages,
 				a.InstallDir, a.Name)
 			if err != nil {
 				return fmt.Errorf("Unable to generate/write HTML: %s", err)
@@ -280,7 +311,7 @@ func (a *Album) GenerateHTML() error {
 	}
 
 	if len(htmlImages) > 0 {
-		err := writeHTMLPage(totalPages, len(a.ChosenImages), page, htmlImages,
+		err := writeHTMLPage(totalPages, len(a.chosenImages), page, htmlImages,
 			a.InstallDir, a.Name)
 		if err != nil {
 			return fmt.Errorf("Unable to generate/write HTML: %s", err)
