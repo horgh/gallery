@@ -30,6 +30,9 @@ type Gallery struct {
 	// Whether to log verbosely.
 	Verbose bool
 
+	// Force generating images (e.g. thumbs) even if they exist.
+	ForceGenerate bool
+
 	// Number of image thumbnails per page in albums.
 	PageSize int
 
@@ -206,6 +209,7 @@ func (g *Gallery) loadAlbum(name, dir, subDir, file, tags string) error {
 		LargeImageSize: largeImageSize,
 		PageSize:       g.PageSize,
 		Verbose:        g.Verbose,
+		ForceGenerate:  g.ForceGenerate,
 	}
 
 	tagsRaw := strings.Split(tags, ",")

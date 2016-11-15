@@ -60,32 +60,36 @@ func (i Image) hasTag(tag string) bool {
 	return false
 }
 
-func (i *Image) makeImages(resizeDir string, verbose bool) error {
-	err := i.makeThumbnail(resizeDir, verbose)
+func (i *Image) makeImages(resizeDir string, verbose,
+	forceGenerate bool) error {
+	err := i.makeThumbnail(resizeDir, verbose, forceGenerate)
 	if err != nil {
 		return err
 	}
 
-	return i.makeLargeImage(resizeDir, verbose)
+	return i.makeLargeImage(resizeDir, verbose, forceGenerate)
 }
 
-func (i *Image) makeThumbnail(resizeDir string, verbose bool) error {
+func (i *Image) makeThumbnail(resizeDir string, verbose,
+	forceGenerate bool) error {
 	resizeFile, err := i.getResizedFilename(resizeDir, i.ThumbnailSize,
 		i.ThumbnailSize)
 	if err != nil {
 		return err
 	}
 
-	// If the resized version exists, nothing to do.
-	_, err = os.Stat(resizeFile)
-	if err == nil {
-		i.ThumbnailPath = resizeFile
-		i.ThumbnailFilename = path.Base(resizeFile)
-		return nil
-	}
+	if !forceGenerate {
+		// If the resized version exists, nothing to do.
+		_, err = os.Stat(resizeFile)
+		if err == nil {
+			i.ThumbnailPath = resizeFile
+			i.ThumbnailFilename = path.Base(resizeFile)
+			return nil
+		}
 
-	if !os.IsNotExist(err) {
-		return fmt.Errorf("Stat: %s %s", resizeFile, err)
+		if !os.IsNotExist(err) {
+			return fmt.Errorf("Stat: %s %s", resizeFile, err)
+		}
 	}
 
 	if verbose {
@@ -150,22 +154,25 @@ func (i *Image) makeThumbnail(resizeDir string, verbose bool) error {
 	return nil
 }
 
-func (i *Image) makeLargeImage(resizeDir string, verbose bool) error {
+func (i *Image) makeLargeImage(resizeDir string, verbose,
+	forceGenerate bool) error {
 	resizeFile, err := i.getResizedFilename(resizeDir, i.LargeImageSize, -1)
 	if err != nil {
 		return err
 	}
 
-	// If the resized version exists, nothing to do.
-	_, err = os.Stat(resizeFile)
-	if err == nil {
-		i.LargeImagePath = resizeFile
-		i.LargeImageFilename = path.Base(resizeFile)
-		return nil
-	}
+	if !forceGenerate {
+		// If the resized version exists, nothing to do.
+		_, err = os.Stat(resizeFile)
+		if err == nil {
+			i.LargeImagePath = resizeFile
+			i.LargeImageFilename = path.Base(resizeFile)
+			return nil
+		}
 
-	if !os.IsNotExist(err) {
-		return fmt.Errorf("Stat: %s %s", resizeFile, err)
+		if !os.IsNotExist(err) {
+			return fmt.Errorf("Stat: %s %s", resizeFile, err)
+		}
 	}
 
 	if verbose {

@@ -46,6 +46,9 @@ type Album struct {
 	// Whether to log verbosely.
 	Verbose bool
 
+	// Force generating images (e.g. thumbs) even if they exist.
+	ForceGenerate bool
+
 	// All available images. Parsed from the album file.
 	images []*Image
 
@@ -224,7 +227,7 @@ func (a *Album) GenerateImages() error {
 	}
 
 	for _, image := range a.chosenImages {
-		err := image.makeImages(a.ResizedDir, a.Verbose)
+		err := image.makeImages(a.ResizedDir, a.Verbose, a.ForceGenerate)
 		if err != nil {
 			return err
 		}

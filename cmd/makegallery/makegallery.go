@@ -30,6 +30,9 @@ type Args struct {
 	// Whether to log verbosely.
 	Verbose bool
 
+	// Force generating images (e.g. thumbs) even if they exist.
+	ForceGenerate bool
+
 	// Images per page (in albums).
 	PageSize int
 }
@@ -46,12 +49,13 @@ func main() {
 	}
 
 	gallery := &gallery.Gallery{
-		File:       args.GalleryFile,
-		ResizedDir: args.ResizedDir,
-		InstallDir: args.InstallDir,
-		Name:       args.Name,
-		Verbose:    args.Verbose,
-		PageSize:   args.PageSize,
+		File:          args.GalleryFile,
+		ResizedDir:    args.ResizedDir,
+		InstallDir:    args.InstallDir,
+		Name:          args.Name,
+		Verbose:       args.Verbose,
+		PageSize:      args.PageSize,
+		ForceGenerate: args.ForceGenerate,
 	}
 
 	err = gallery.Install()
@@ -67,6 +71,7 @@ func getArgs() (*Args, error) {
 	title := flag.String("title", "Gallery", "Name/title of the gallery.")
 	verbose := flag.Bool("verbose", false, "Toggle verbose logging.")
 	pageSize := flag.Int("page-size", 20, "Number of image thumbnails per page in albums.")
+	forceGenerate := flag.Bool("force-generate", false, "Force regenerating resized images. Normally we only do so if they don't exist.")
 
 	flag.Parse()
 
@@ -87,11 +92,12 @@ func getArgs() (*Args, error) {
 	}
 
 	return &Args{
-		GalleryFile: *galleryFile,
-		ResizedDir:  *resizedDir,
-		InstallDir:  *installDir,
-		Name:        *title,
-		Verbose:     *verbose,
-		PageSize:    *pageSize,
+		GalleryFile:   *galleryFile,
+		ResizedDir:    *resizedDir,
+		InstallDir:    *installDir,
+		Name:          *title,
+		Verbose:       *verbose,
+		PageSize:      *pageSize,
+		ForceGenerate: *forceGenerate,
 	}, nil
 }
