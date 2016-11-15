@@ -12,7 +12,7 @@ import (
 
 // Image holds image information from the metadata file.
 type Image struct {
-	// Full path to the iamge.
+	// Full path to the image.
 	Path string
 
 	// Image's basename.
@@ -217,7 +217,9 @@ func (i *Image) makeLargeImage(resizeDir string, verbose,
 
 // getResizedFilename gets the filename and path to the file with the given
 // width.
-func (i Image) getResizedFilename(dir string, width, height int) (string, error) {
+func (i Image) getResizedFilename(dir string, width,
+	height int) (string, error) {
+
 	namePieces := strings.Split(i.Filename, ".")
 
 	if len(namePieces) != 2 {

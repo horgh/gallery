@@ -54,6 +54,9 @@ type Album struct {
 	// Force generating images (e.g. thumbs) even if they exist.
 	ForceGenerate bool
 
+	// Gallery's name/title.
+	GalleryName string
+
 	// All available images. Parsed from the album file.
 	images []*Image
 
@@ -263,6 +266,7 @@ func (a *Album) InstallImages() error {
 	for _, image := range a.chosenImages {
 		thumbTarget := path.Join(a.InstallDir, image.ThumbnailFilename)
 		largeTarget := path.Join(a.InstallDir, image.LargeImageFilename)
+		origTarget := path.Join(a.InstallDir, image.Filename)
 
 		err = copyFile(image.ThumbnailPath, thumbTarget)
 		if err != nil {
@@ -276,7 +280,11 @@ func (a *Album) InstallImages() error {
 				largeTarget, err)
 		}
 
-		// TODO: How about original?
+		err = copyFile(image.Path, origTarget)
+		if err != nil {
+			return fmt.Errorf("Unable to copy %s to %s: %s", image.Path, origTarget,
+				err)
+		}
 	}
 
 	return nil
@@ -300,28 +308,38 @@ func (a *Album) GenerateHTML() error {
 		totalPages++
 	}
 
-	for _, image := range a.chosenImages {
-		htmlImages = append(htmlImages, HTMLImage{
-			ThumbImageURL: image.ThumbnailFilename,
-			FullImageURL:  image.LargeImageFilename,
-			Description:   image.Description,
-		})
+	for i, image := range a.chosenImages {
+		htmlImage := HTMLImage{
+			OriginalImageURL: image.Filename,
+			ThumbImageURL:    image.ThumbnailFilename,
+			FullImageURL:     image.LargeImageFilename,
+			Description:      image.Description,
+			Index:            i,
+		}
+
+		htmlImages = append(htmlImages, htmlImage)
 
 		if len(htmlImages) == a.PageSize {
 			err := makeAlbumPageHTML(totalPages, len(a.chosenImages), page,
-				htmlImages, a.InstallDir, a.Name)
+				htmlImages, a.InstallDir, a.Name, a.GalleryName)
 			if err != nil {
-				return fmt.Errorf("Unable to generate/write HTML: %s", err)
+				return fmt.Errorf("Unable to generate album page HTML: %s", err)
 			}
 
 			htmlImages = nil
 			page++
 		}
+
+		err := makeImagePageHTML(htmlImage, a.InstallDir, a.Name,
+			len(a.chosenImages), a.Name, a.GalleryName)
+		if err != nil {
+			return fmt.Errorf("Unable to generate image page HTML: %s", err)
+		}
 	}
 
 	if len(htmlImages) > 0 {
 		err := makeAlbumPageHTML(totalPages, len(a.chosenImages), page, htmlImages,
-			a.InstallDir, a.Name)
+			a.InstallDir, a.Name, a.GalleryName)
 		if err != nil {
 			return fmt.Errorf("Unable to generate/write HTML: %s", err)
 		}

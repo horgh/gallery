@@ -214,6 +214,7 @@ func (g *Gallery) loadAlbum(name, dir, subDir, file, tags string) error {
 		Workers:        g.Workers,
 		Verbose:        g.Verbose,
 		ForceGenerate:  g.ForceGenerate,
+		GalleryName:    g.Name,
 	}
 
 	tagsRaw := strings.Split(tags, ",")
