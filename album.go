@@ -3,10 +3,12 @@ package gallery
 import (
 	"bufio"
 	"fmt"
+	"log"
 	"math/rand"
 	"os"
 	"path"
 	"strings"
+	"sync"
 )
 
 // Album holds information about an album of images.
@@ -42,6 +44,9 @@ type Album struct {
 
 	// How many images per page.
 	PageSize int
+
+	// Number of workers to use in resizing images.
+	Workers int
 
 	// Whether to log verbosely.
 	Verbose bool
@@ -218,12 +223,31 @@ func (a *Album) GenerateImages() error {
 		return err
 	}
 
-	for _, image := range a.chosenImages {
-		err := image.makeImages(a.ResizedDir, a.Verbose, a.ForceGenerate)
-		if err != nil {
-			return err
-		}
+	ch := make(chan *Image)
+
+	wg := sync.WaitGroup{}
+
+	for i := 0; i < a.Workers; i++ {
+		go func(id int) {
+			wg.Add(1)
+			defer wg.Done()
+
+			for image := range ch {
+				err := image.makeImages(a.ResizedDir, a.Verbose, a.ForceGenerate)
+				if err != nil {
+					log.Printf("Problem making images: %s", err)
+				}
+			}
+		}(i)
 	}
+
+	for _, image := range a.chosenImages {
+		ch <- image
+	}
+
+	close(ch)
+
+	wg.Wait()
 
 	return nil
 }

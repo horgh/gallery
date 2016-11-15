@@ -35,6 +35,9 @@ type Args struct {
 
 	// Images per page (in albums).
 	PageSize int
+
+	// Number of workers to use in resizing images.
+	Workers int
 }
 
 func main() {
@@ -56,6 +59,7 @@ func main() {
 		Verbose:       args.Verbose,
 		PageSize:      args.PageSize,
 		ForceGenerate: args.ForceGenerate,
+		Workers:       args.Workers,
 	}
 
 	err = gallery.Install()
@@ -72,6 +76,7 @@ func getArgs() (*Args, error) {
 	verbose := flag.Bool("verbose", false, "Toggle verbose logging.")
 	pageSize := flag.Int("page-size", 20, "Number of image thumbnails per page in albums.")
 	forceGenerate := flag.Bool("force-generate", false, "Force regenerating resized images. Normally we only do so if they don't exist.")
+	workers := flag.Int("workers", 4, "Number of workers for image resizing.")
 
 	flag.Parse()
 
@@ -99,5 +104,6 @@ func getArgs() (*Args, error) {
 		Verbose:       *verbose,
 		PageSize:      *pageSize,
 		ForceGenerate: *forceGenerate,
+		Workers:       *workers,
 	}, nil
 }

@@ -36,6 +36,9 @@ type Gallery struct {
 	// Number of image thumbnails per page in albums.
 	PageSize int
 
+	// Number of workers to use in resizing images.
+	Workers int
+
 	// Albums in the gallery.
 	albums []*Album
 }
@@ -208,6 +211,7 @@ func (g *Gallery) loadAlbum(name, dir, subDir, file, tags string) error {
 		ThumbnailSize:  thumbnailSize,
 		LargeImageSize: largeImageSize,
 		PageSize:       g.PageSize,
+		Workers:        g.Workers,
 		Verbose:        g.Verbose,
 		ForceGenerate:  g.ForceGenerate,
 	}
