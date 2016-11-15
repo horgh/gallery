@@ -18,12 +18,8 @@ type HTMLImage struct {
 func writeHTMLPage(totalPages int, totalImages int, page int,
 	images []HTMLImage, installDir string, title string) error {
 	const tpl = `<!DOCTYPE html>
-<html>
-<head>
-	<meta charset="UTF-8">
-	<title>{{.Title}}</title>
-</head>
-<body>
+<meta charset="utf-8">
+<title>{{.Title}}</title>
 <h1>{{.Title}}</h1>
 {{range .Images}}
 <div class="image">
@@ -45,8 +41,6 @@ func writeHTMLPage(totalPages int, totalImages int, page int,
 {{end}}
 
 {{end}}
-</body>
-</html>
 `
 
 	t, err := template.New("page").Parse(tpl)
