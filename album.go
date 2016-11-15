@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"math/rand"
 	"os"
-	"path/filepath"
+	"path"
 	"strings"
 )
 
@@ -26,24 +26,31 @@ type Album struct {
 	// Dir to install HTML/images.
 	InstallDir string
 
+	// Subdirectory we will be in.
+	SubDir string
+
 	// Tags tells us to include images that has one of these tags. If there are
 	// no tags specified, then include all images.
 	Tags []string
 
-	// Image thumb size. Percent.
-	ThumbSize int
+	// Image thumbnail size. Width. Pixels.
+	ThumbnailSize int
 
-	// Image "full" size. Percent.
-	FullSize int
+	// Image size. Width. Pixels. This is an image larger than the thumbnail but
+	// still likely smaller than the original.
+	LargeImageSize int
 
 	// How many images per page.
 	PageSize int
 
+	// Whether to log verbosely.
+	Verbose bool
+
 	// All available images. Parsed from the album file.
-	images []Image
+	images []*Image
 
 	// A subset of the available images. Those chosen based on tags.
-	chosenImages []Image
+	chosenImages []*Image
 }
 
 // LoadAlbumFile parses a file listing images and information about them.
@@ -104,10 +111,13 @@ func (a *Album) LoadAlbumFile() error {
 		}
 
 		if len(scanner.Text()) == 0 {
-			a.images = append(a.images, Image{
-				Filename:    imageFilename,
-				Description: description,
-				Tags:        tags,
+			a.images = append(a.images, &Image{
+				Path:           path.Join(a.OrigImageDir, imageFilename),
+				Filename:       imageFilename,
+				Description:    description,
+				Tags:           tags,
+				ThumbnailSize:  a.ThumbnailSize,
+				LargeImageSize: a.LargeImageSize,
 			})
 			wantFilename = true
 			wantDescription = false
@@ -128,10 +138,13 @@ func (a *Album) LoadAlbumFile() error {
 
 	// May have one last file to store
 	if !wantFilename && !wantDescription {
-		a.images = append(a.images, Image{
-			Filename:    imageFilename,
-			Description: description,
-			Tags:        tags,
+		a.images = append(a.images, &Image{
+			Path:           path.Join(a.OrigImageDir, imageFilename),
+			Filename:       imageFilename,
+			Description:    description,
+			Tags:           tags,
+			ThumbnailSize:  a.ThumbnailSize,
+			LargeImageSize: a.LargeImageSize,
 		})
 	}
 
@@ -211,14 +224,9 @@ func (a *Album) GenerateImages() error {
 	}
 
 	for _, image := range a.chosenImages {
-		err := image.shrink(a.ThumbSize, a.OrigImageDir, a.ResizedDir)
+		err := image.makeImages(a.ResizedDir, a.Verbose)
 		if err != nil {
-			return fmt.Errorf("Unable to resize to %d%%: %s", a.ThumbSize, err)
-		}
-
-		err = image.shrink(a.FullSize, a.OrigImageDir, a.ResizedDir)
-		if err != nil {
-			return fmt.Errorf("Unable to resize to %d%%: %s", a.FullSize, err)
+			return err
 		}
 	}
 
@@ -234,31 +242,22 @@ func (a *Album) InstallImages() error {
 	}
 
 	for _, image := range a.chosenImages {
-		thumb, err := image.getResizedFilename(a.ThumbSize, a.ResizedDir)
+		thumbTarget := path.Join(a.InstallDir, image.ThumbnailFilename)
+		largeTarget := path.Join(a.InstallDir, image.LargeImageFilename)
+
+		err = copyFile(image.ThumbnailPath, thumbTarget)
 		if err != nil {
-			return fmt.Errorf("Unable to determine thumbnail filename: %s", err)
+			return fmt.Errorf("Unable to copy %s to %s: %s", image.ThumbnailPath,
+				thumbTarget, err)
 		}
 
-		full, err := image.getResizedFilename(a.FullSize, a.ResizedDir)
+		err = copyFile(image.LargeImagePath, largeTarget)
 		if err != nil {
-			return fmt.Errorf("Unable to determine full size filename: %s", err)
+			return fmt.Errorf("Unable to copy %s to %s: %s", image.LargeImagePath,
+				largeTarget, err)
 		}
 
-		thumbTarget := fmt.Sprintf("%s%c%s", a.InstallDir, os.PathSeparator,
-			filepath.Base(thumb))
-
-		fullTarget := fmt.Sprintf("%s%c%s", a.InstallDir, os.PathSeparator,
-			filepath.Base(full))
-
-		err = copyFile(thumb, thumbTarget)
-		if err != nil {
-			return fmt.Errorf("Unable to copy %s to %s: %s", thumb, thumbTarget, err)
-		}
-
-		err = copyFile(full, fullTarget)
-		if err != nil {
-			return fmt.Errorf("Unable to copy %s to %s: %s", full, fullTarget, err)
-		}
+		// TODO: How about original?
 	}
 
 	return nil
@@ -283,25 +282,15 @@ func (a *Album) GenerateHTML() error {
 	}
 
 	for _, image := range a.chosenImages {
-		thumbFilename, err := image.getResizedFilename(a.ThumbSize, a.ResizedDir)
-		if err != nil {
-			return fmt.Errorf("Unable to determine thumbnail filename: %s", err)
-		}
-
-		fullFilename, err := image.getResizedFilename(a.FullSize, a.ResizedDir)
-		if err != nil {
-			return fmt.Errorf("Unable to determine full image filename: %s", err)
-		}
-
 		htmlImages = append(htmlImages, HTMLImage{
-			FullImageURL:  filepath.Base(fullFilename),
-			ThumbImageURL: filepath.Base(thumbFilename),
+			ThumbImageURL: image.ThumbnailFilename,
+			FullImageURL:  image.LargeImageFilename,
 			Description:   image.Description,
 		})
 
 		if len(htmlImages) == a.PageSize {
-			err := writeHTMLPage(totalPages, len(a.chosenImages), page, htmlImages,
-				a.InstallDir, a.Name)
+			err := makeAlbumPageHTML(totalPages, len(a.chosenImages), page,
+				htmlImages, a.InstallDir, a.Name)
 			if err != nil {
 				return fmt.Errorf("Unable to generate/write HTML: %s", err)
 			}
@@ -312,7 +301,7 @@ func (a *Album) GenerateHTML() error {
 	}
 
 	if len(htmlImages) > 0 {
-		err := writeHTMLPage(totalPages, len(a.chosenImages), page, htmlImages,
+		err := makeAlbumPageHTML(totalPages, len(a.chosenImages), page, htmlImages,
 			a.InstallDir, a.Name)
 		if err != nil {
 			return fmt.Errorf("Unable to generate/write HTML: %s", err)
@@ -323,7 +312,7 @@ func (a *Album) GenerateHTML() error {
 }
 
 // GetThumb picks a thumbnail to represent the album.
-func (a *Album) GetThumb() Image {
+func (a *Album) GetThumb() *Image {
 	i := rand.Int() % len(a.chosenImages)
 	return a.chosenImages[i]
 }

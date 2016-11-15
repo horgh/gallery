@@ -5,6 +5,7 @@ import (
 	"html/template"
 	"log"
 	"os"
+	"path"
 )
 
 // HTMLImage holds image info needed in HTML.
@@ -14,13 +15,22 @@ type HTMLImage struct {
 	Description   string
 }
 
-// writeHTMLPage generates and writes an HTML page for the given set of images.
-func writeHTMLPage(totalPages int, totalImages int, page int,
-	images []HTMLImage, installDir string, title string) error {
+// HTMLAlbum holds info needed in HTML about an album.
+type HTMLAlbum struct {
+	URL      string
+	ThumbURL string
+	Title    string
+}
+
+// generate and write an HTML page for an album.
+func makeAlbumPageHTML(totalPages, totalImages, page int,
+	images []HTMLImage, installDir, title string) error {
+
 	const tpl = `<!DOCTYPE html>
 <meta charset="utf-8">
 <title>{{.Title}}</title>
 <h1>{{.Title}}</h1>
+<a href="..">Gallery</a>
 {{range .Images}}
 <div class="image">
 	<a href="{{.FullImageURL}}">
@@ -55,9 +65,9 @@ func writeHTMLPage(totalPages int, totalImages int, page int,
 		filename = fmt.Sprintf("page-%d.html", page)
 	}
 
-	path := fmt.Sprintf("%s%c%s", installDir, os.PathSeparator, filename)
+	htmlPath := path.Join(installDir, filename)
 
-	fh, err := os.Create(path)
+	fh, err := os.Create(htmlPath)
 	if err != nil {
 		return fmt.Errorf("Unable to open HTML file: %s", err)
 	}
@@ -103,6 +113,63 @@ func writeHTMLPage(totalPages int, totalImages int, page int,
 		return fmt.Errorf("Close: %s", err)
 	}
 
-	log.Printf("Wrote HTML file: %s", filename)
+	log.Printf("Wrote HTML file: %s", htmlPath)
+	return nil
+}
+
+// makeGalleryHTML creates an HTML file that acts as the top level of the
+// gallery. This is a single page that links to all albums.
+func makeGalleryHTML(installDir, name string, albums []HTMLAlbum) error {
+	err := makeDirIfNotExist(installDir)
+	if err != nil {
+		return err
+	}
+
+	const tpl = `<!DOCTYPE html>
+<meta charset="utf-8">
+<title>{{.Title}}</title>
+<h1>{{.Title}}</h1>
+{{range .Albums}}
+<div class="album">
+	<a href="{{.URL}}">
+		<img src="{{.ThumbURL}}">
+	</a>
+	<p>{{.Title}}</p>
+</div>
+{{end}}
+`
+
+	t, err := template.New("page").Parse(tpl)
+	if err != nil {
+		return fmt.Errorf("Unable to parse HTML template: %s", err)
+	}
+
+	htmlPath := path.Join(installDir, "index.html")
+
+	fh, err := os.Create(htmlPath)
+	if err != nil {
+		return fmt.Errorf("Unable to open HTML file: %s", err)
+	}
+
+	data := struct {
+		Title  string
+		Albums []HTMLAlbum
+	}{
+		Title:  name,
+		Albums: albums,
+	}
+
+	err = t.Execute(fh, data)
+	if err != nil {
+		_ = fh.Close()
+		return fmt.Errorf("Unable to execute template: %s", err)
+	}
+
+	err = fh.Close()
+	if err != nil {
+		return fmt.Errorf("Close: %s", err)
+	}
+
+	log.Printf("Wrote HTML file: %s", htmlPath)
 	return nil
 }

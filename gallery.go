@@ -4,8 +4,12 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"path"
 	"strings"
 )
+
+const thumbnailSize = 100
+const largeImageSize = 595
 
 // Gallery holds information about a full gallery site which contains 1 or
 // more albums of images.
@@ -23,6 +27,12 @@ type Gallery struct {
 	// Name of the gallery. Its title.
 	Name string
 
+	// Whether to log verbosely.
+	Verbose bool
+
+	// Number of image thumbnails per page in albums.
+	PageSize int
+
 	// Albums in the gallery.
 	albums []*Album
 }
@@ -35,15 +45,37 @@ func (g *Gallery) Install() error {
 		return fmt.Errorf("Unable to load gallery file: %s", err)
 	}
 
+	err = makeDirIfNotExist(g.InstallDir)
+	if err != nil {
+		return err
+	}
+
+	err = makeDirIfNotExist(g.ResizedDir)
+	if err != nil {
+		return err
+	}
+
+	htmlAlbums := []HTMLAlbum{}
+
 	for _, album := range g.albums {
 		err := album.Install()
 		if err != nil {
 			return fmt.Errorf("Unable to install album: %s: %s", album.Name,
 				err)
 		}
+
+		htmlAlbums = append(htmlAlbums, HTMLAlbum{
+			URL: fmt.Sprintf("%s/index.html", album.SubDir),
+			ThumbURL: fmt.Sprintf("%s/%s", album.SubDir,
+				album.GetThumb().ThumbnailFilename),
+			Title: album.Name,
+		})
 	}
 
-	// Build and install top level gallery HTML.
+	err = makeGalleryHTML(g.InstallDir, g.Name, htmlAlbums)
+	if err != nil {
+		return fmt.Errorf("Unable to make gallery HTML: %s", err)
+	}
 
 	return nil
 }
@@ -52,12 +84,15 @@ func (g *Gallery) Install() error {
 //
 // Format of the gallery file: It is made of blocks that look like this:
 //
-// album-name = Name/title of an album
-// album-path = Path to the directory containing the album's images.
-// album-file = Path to a file describing the album's images.
-// album-tags = Comma separated list of tags to use to decide what images
-//              from the album to include. If this is empty then we include all
-//              images.
+// album-name   = Name/title of an album. Human readable.
+// album-dir    = Path to the directory containing the album's original images.
+// album-subdir = A name for the album suitable as a directory name. Not
+//                absolute. We install images here and store them here in a
+//                subdir to avoid collisions with other albums.
+// album-file   = Path to a file describing the album's images.
+// album-tags   = Comma separated list of tags to use to decide what images
+//                from the album to include. If this is empty then we include
+//                all images.
 func (g *Gallery) load(file string) error {
 	fh, err := os.Open(file)
 	if err != nil {
@@ -67,7 +102,8 @@ func (g *Gallery) load(file string) error {
 	scanner := bufio.NewScanner(fh)
 
 	albumName := ""
-	albumPath := ""
+	albumSubDir := ""
+	albumDir := ""
 	albumFile := ""
 	albumTags := ""
 
@@ -77,7 +113,7 @@ func (g *Gallery) load(file string) error {
 			continue
 		}
 
-		pieces := strings.SplitN(text, "=", 1)
+		pieces := strings.SplitN(text, "=", 2)
 		if len(pieces) != 2 {
 			_ = fh.Close()
 			return fmt.Errorf("Malformed line: %s", text)
@@ -88,7 +124,8 @@ func (g *Gallery) load(file string) error {
 
 		if pieces[0] == "album-name" {
 			if len(albumName) > 0 {
-				err := g.loadAlbum(albumName, albumPath, albumFile, albumTags)
+				err := g.loadAlbum(albumName, albumDir, albumSubDir, albumFile,
+					albumTags)
 				if err != nil {
 					_ = fh.Close()
 					return err
@@ -99,8 +136,13 @@ func (g *Gallery) load(file string) error {
 			continue
 		}
 
-		if pieces[0] == "album-path" {
-			albumPath = pieces[1]
+		if pieces[0] == "album-dir" {
+			albumDir = pieces[1]
+			continue
+		}
+
+		if pieces[0] == "album-subdir" {
+			albumSubDir = pieces[1]
 			continue
 		}
 
@@ -118,7 +160,7 @@ func (g *Gallery) load(file string) error {
 		return fmt.Errorf("Unexpected line in file: %s", text)
 	}
 
-	err = g.loadAlbum(albumName, albumPath, albumFile, albumTags)
+	err = g.loadAlbum(albumName, albumDir, albumSubDir, albumFile, albumTags)
 	if err != nil {
 		_ = fh.Close()
 		return err
@@ -136,13 +178,17 @@ func (g *Gallery) load(file string) error {
 	return nil
 }
 
-func (g *Gallery) loadAlbum(name, path, file, tags string) error {
+func (g *Gallery) loadAlbum(name, dir, subDir, file, tags string) error {
 	if len(name) == 0 {
 		return fmt.Errorf("Blank name")
 	}
 
-	if len(path) == 0 {
-		return fmt.Errorf("No path provided")
+	if len(dir) == 0 {
+		return fmt.Errorf("No dir provided")
+	}
+
+	if len(subDir) == 0 {
+		return fmt.Errorf("No subdir provided")
 	}
 
 	if len(file) == 0 {
@@ -150,12 +196,16 @@ func (g *Gallery) loadAlbum(name, path, file, tags string) error {
 	}
 
 	album := &Album{
-		Name:         name,
-		File:         file,
-		OrigImageDir: path,
-		ResizedDir:   g.ResizedDir,
-		InstallDir:   g.InstallDir,
-		PageSize:     20,
+		Name:           name,
+		File:           file,
+		OrigImageDir:   dir,
+		ResizedDir:     path.Join(g.ResizedDir, subDir),
+		InstallDir:     path.Join(g.InstallDir, subDir),
+		SubDir:         subDir,
+		ThumbnailSize:  thumbnailSize,
+		LargeImageSize: largeImageSize,
+		PageSize:       g.PageSize,
+		Verbose:        g.Verbose,
 	}
 
 	tagsRaw := strings.Split(tags, ",")

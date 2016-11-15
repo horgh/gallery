@@ -26,6 +26,12 @@ type Args struct {
 
 	// Title/name of the gallery.
 	Name string
+
+	// Whether to log verbosely.
+	Verbose bool
+
+	// Images per page (in albums).
+	PageSize int
 }
 
 func main() {
@@ -43,7 +49,9 @@ func main() {
 		File:       args.GalleryFile,
 		ResizedDir: args.ResizedDir,
 		InstallDir: args.InstallDir,
-		Name:       args.Title,
+		Name:       args.Name,
+		Verbose:    args.Verbose,
+		PageSize:   args.PageSize,
 	}
 
 	err = gallery.Install()
@@ -57,6 +65,8 @@ func getArgs() (*Args, error) {
 	resizedDir := flag.String("resized-dir", "", "Path to a directory to store resized images.")
 	installDir := flag.String("install-dir", "", "Path to a directory to output HTML/images.")
 	title := flag.String("title", "Gallery", "Name/title of the gallery.")
+	verbose := flag.Bool("verbose", false, "Toggle verbose logging.")
+	pageSize := flag.Int("page-size", 20, "Number of image thumbnails per page in albums.")
 
 	flag.Parse()
 
@@ -80,6 +90,8 @@ func getArgs() (*Args, error) {
 		GalleryFile: *galleryFile,
 		ResizedDir:  *resizedDir,
 		InstallDir:  *installDir,
-		Title:       *title,
+		Name:        *title,
+		Verbose:     *verbose,
+		PageSize:    *pageSize,
 	}, nil
 }
