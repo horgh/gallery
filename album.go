@@ -61,6 +61,37 @@ type Album struct {
 	chosenImages []*Image
 }
 
+// Install loads image information, and then chooses, resizes, builds HTML, and
+// installs the HTML and images.
+func (a *Album) Install() error {
+	err := a.load()
+	if err != nil {
+		return fmt.Errorf("Unable to parse metadata file: %s", err)
+	}
+
+	err = a.ChooseImages()
+	if err != nil {
+		return fmt.Errorf("Unable to choose images: %s", err)
+	}
+
+	err = a.GenerateImages()
+	if err != nil {
+		return fmt.Errorf("Problem generating images: %s", err)
+	}
+
+	err = a.GenerateHTML()
+	if err != nil {
+		return fmt.Errorf("Problem generating HTML: %s", err)
+	}
+
+	err = a.InstallImages()
+	if err != nil {
+		return fmt.Errorf("Unable to install images: %s", err)
+	}
+
+	return nil
+}
+
 // LoadAlbumFile parses a file listing images and information about them.
 //
 // Format:
@@ -156,37 +187,6 @@ func (a *Album) load() error {
 	return nil
 }
 
-// Install loads image information, and then chooses, resizes, builds HTML, and
-// installs the HTML and images.
-func (a *Album) Install() error {
-	err := a.load()
-	if err != nil {
-		return fmt.Errorf("Unable to parse metadata file: %s", err)
-	}
-
-	err = a.ChooseImages()
-	if err != nil {
-		return fmt.Errorf("Unable to choose images: %s", err)
-	}
-
-	err = a.GenerateImages()
-	if err != nil {
-		return fmt.Errorf("Problem generating images: %s", err)
-	}
-
-	err = a.GenerateHTML()
-	if err != nil {
-		return fmt.Errorf("Problem generating HTML: %s", err)
-	}
-
-	err = a.InstallImages()
-	if err != nil {
-		return fmt.Errorf("Unable to install images: %s", err)
-	}
-
-	return nil
-}
-
 // ChooseImages decides which images we will include when we build the HTML.
 //
 // The basis for this choice is whether the image has one of the requested tags
@@ -247,32 +247,14 @@ func (a *Album) GenerateImages() error {
 	return nil
 }
 
-// InstallImages copies the chosen images from the resized directory into the
-// install directory.
+// InstallImages copies the chosen images into the install directory.
+//
+// The only images that may not be there yet are the original images.
 func (a *Album) InstallImages() error {
-	err := makeDirIfNotExist(a.InstallDir)
-	if err != nil {
-		return err
-	}
-
 	for _, image := range a.chosenImages {
-		thumbTarget := path.Join(a.InstallDir, image.ThumbnailFilename)
-		largeTarget := path.Join(a.InstallDir, image.LargeImageFilename)
 		origTarget := path.Join(a.InstallDir, image.Filename)
 
-		err = copyFile(image.ThumbnailPath, thumbTarget)
-		if err != nil {
-			return fmt.Errorf("Unable to copy %s to %s: %s", image.ThumbnailPath,
-				thumbTarget, err)
-		}
-
-		err = copyFile(image.LargeImagePath, largeTarget)
-		if err != nil {
-			return fmt.Errorf("Unable to copy %s to %s: %s", image.LargeImagePath,
-				largeTarget, err)
-		}
-
-		err = copyFile(image.Path, origTarget)
+		err := copyFile(image.Path, origTarget)
 		if err != nil {
 			return fmt.Errorf("Unable to copy %s to %s: %s", image.Path, origTarget,
 				err)

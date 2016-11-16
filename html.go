@@ -66,6 +66,65 @@ body {
 }
 `
 
+// makeGalleryHTML creates an HTML file that acts as the top level of the
+// gallery. This is a single page that links to all albums.
+func makeGalleryHTML(installDir, name string, albums []HTMLAlbum) error {
+	err := makeDirIfNotExist(installDir)
+	if err != nil {
+		return err
+	}
+
+	const tpl = `<!DOCTYPE html>
+<meta charset="utf-8">
+<title>{{.Name}}</title>
+<style>` + css + `</style>
+<h1>{{.Name}}</h1>
+
+<div id="albums">
+	{{range .Albums}}
+		<div class="album">
+			<a href="{{.URL}}"><img src="{{.ThumbURL}}"></a>
+			<p><a href="{{.URL}}">{{.Name}}</a></p>
+		</div>
+	{{end}}
+</div>
+`
+
+	t, err := template.New("page").Parse(tpl)
+	if err != nil {
+		return fmt.Errorf("Unable to parse HTML template: %s", err)
+	}
+
+	htmlPath := path.Join(installDir, "index.html")
+
+	fh, err := os.Create(htmlPath)
+	if err != nil {
+		return fmt.Errorf("Unable to open HTML file: %s", err)
+	}
+
+	data := struct {
+		Name   string
+		Albums []HTMLAlbum
+	}{
+		Name:   name,
+		Albums: albums,
+	}
+
+	err = t.Execute(fh, data)
+	if err != nil {
+		_ = fh.Close()
+		return fmt.Errorf("Unable to execute template: %s", err)
+	}
+
+	err = fh.Close()
+	if err != nil {
+		return fmt.Errorf("Close: %s", err)
+	}
+
+	log.Printf("Wrote HTML file: %s", htmlPath)
+	return nil
+}
+
 // generate and write an HTML page for an album.
 func makeAlbumPageHTML(totalPages, totalImages, page int,
 	images []HTMLImage, installDir, name, galleryName string) error {
@@ -248,65 +307,6 @@ func makeImagePageHTML(image HTMLImage, dir string, totalImages int,
 		Description:      image.Description,
 		NextURL:          nextURL,
 		PreviousURL:      previousURL,
-	}
-
-	err = t.Execute(fh, data)
-	if err != nil {
-		_ = fh.Close()
-		return fmt.Errorf("Unable to execute template: %s", err)
-	}
-
-	err = fh.Close()
-	if err != nil {
-		return fmt.Errorf("Close: %s", err)
-	}
-
-	log.Printf("Wrote HTML file: %s", htmlPath)
-	return nil
-}
-
-// makeGalleryHTML creates an HTML file that acts as the top level of the
-// gallery. This is a single page that links to all albums.
-func makeGalleryHTML(installDir, name string, albums []HTMLAlbum) error {
-	err := makeDirIfNotExist(installDir)
-	if err != nil {
-		return err
-	}
-
-	const tpl = `<!DOCTYPE html>
-<meta charset="utf-8">
-<title>{{.Name}}</title>
-<style>` + css + `</style>
-<h1>{{.Name}}</h1>
-
-<div id="albums">
-	{{range .Albums}}
-		<div class="album">
-			<a href="{{.URL}}"><img src="{{.ThumbURL}}"></a>
-			<p><a href="{{.URL}}">{{.Name}}</a></p>
-		</div>
-	{{end}}
-</div>
-`
-
-	t, err := template.New("page").Parse(tpl)
-	if err != nil {
-		return fmt.Errorf("Unable to parse HTML template: %s", err)
-	}
-
-	htmlPath := path.Join(installDir, "index.html")
-
-	fh, err := os.Create(htmlPath)
-	if err != nil {
-		return fmt.Errorf("Unable to open HTML file: %s", err)
-	}
-
-	data := struct {
-		Name   string
-		Albums []HTMLAlbum
-	}{
-		Name:   name,
-		Albums: albums,
 	}
 
 	err = t.Execute(fh, data)
