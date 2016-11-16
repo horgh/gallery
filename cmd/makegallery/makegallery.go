@@ -27,8 +27,11 @@ type Args struct {
 	// Whether to log verbosely.
 	Verbose bool
 
-	// Force generating images (e.g. thumbs) even if they exist.
-	ForceGenerate bool
+	// Force generation of images (e.g. thumbs) even if they exist.
+	ForceGenerateImages bool
+
+	// Force generation of HTML even if it exists.
+	ForceGenerateHTML bool
 
 	// Images per page (inside albums).
 	PageSize int
@@ -49,13 +52,14 @@ func main() {
 	}
 
 	gallery := &gallery.Gallery{
-		File:          args.GalleryFile,
-		InstallDir:    args.InstallDir,
-		Name:          args.Name,
-		Verbose:       args.Verbose,
-		ForceGenerate: args.ForceGenerate,
-		PageSize:      args.PageSize,
-		Workers:       args.Workers,
+		File:                args.GalleryFile,
+		InstallDir:          args.InstallDir,
+		Name:                args.Name,
+		Verbose:             args.Verbose,
+		ForceGenerateImages: args.ForceGenerateImages,
+		ForceGenerateHTML:   args.ForceGenerateHTML,
+		PageSize:            args.PageSize,
+		Workers:             args.Workers,
 	}
 
 	err = gallery.Install()
@@ -70,7 +74,8 @@ func getArgs() (*Args, error) {
 	title := flag.String("title", "Gallery", "Name/title of the gallery.")
 	verbose := flag.Bool("verbose", false, "Toggle verbose logging.")
 	pageSize := flag.Int("page-size", 50, "Number of image thumbnails per page in albums.")
-	forceGenerate := flag.Bool("force-generate", false, "Force regenerating resized images. Normally we only do so if they don't exist.")
+	forceGenerateImages := flag.Bool("generate-images", false, "Force regenerating resized images. Normally we only do so if they don't exist.")
+	forceGenerateHTML := flag.Bool("generate-html", false, "Force regenerating HTML. Normally we only do so if it does not exist.")
 	workers := flag.Int("workers", 4, "Number of workers for image resizing.")
 
 	flag.Parse()
@@ -88,12 +93,13 @@ func getArgs() (*Args, error) {
 	}
 
 	return &Args{
-		GalleryFile:   *galleryFile,
-		InstallDir:    *installDir,
-		Name:          *title,
-		Verbose:       *verbose,
-		PageSize:      *pageSize,
-		ForceGenerate: *forceGenerate,
-		Workers:       *workers,
+		GalleryFile:         *galleryFile,
+		InstallDir:          *installDir,
+		Name:                *title,
+		Verbose:             *verbose,
+		PageSize:            *pageSize,
+		ForceGenerateImages: *forceGenerateImages,
+		ForceGenerateHTML:   *forceGenerateHTML,
+		Workers:             *workers,
 	}, nil
 }

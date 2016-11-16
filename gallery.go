@@ -30,8 +30,11 @@ type Gallery struct {
 	// Whether to log verbosely.
 	Verbose bool
 
-	// Force generating images (e.g. thumbs) even if they exist.
-	ForceGenerate bool
+	// Force generation of images (e.g. thumbs) even if they exist.
+	ForceGenerateImages bool
+
+	// Force generation of HTML even if it exists.
+	ForceGenerateHTML bool
 
 	// Number of image thumbnails per page in albums.
 	PageSize int
@@ -73,7 +76,8 @@ func (g *Gallery) Install() error {
 		})
 	}
 
-	err = makeGalleryHTML(g.InstallDir, g.Name, htmlAlbums, g.Verbose)
+	err = makeGalleryHTML(g.InstallDir, g.Name, htmlAlbums, g.Verbose,
+		g.ForceGenerateHTML)
 	if err != nil {
 		return fmt.Errorf("Unable to make gallery HTML: %s", err)
 	}
@@ -197,18 +201,19 @@ func (g *Gallery) loadAlbum(name, dir, subDir, file, tags string) error {
 	}
 
 	album := &Album{
-		Name:           name,
-		File:           file,
-		OrigImageDir:   dir,
-		InstallDir:     path.Join(g.InstallDir, subDir),
-		InstallSubDir:  subDir,
-		ThumbnailSize:  thumbnailSize,
-		LargeImageSize: largeImageSize,
-		PageSize:       g.PageSize,
-		Workers:        g.Workers,
-		Verbose:        g.Verbose,
-		ForceGenerate:  g.ForceGenerate,
-		GalleryName:    g.Name,
+		Name:                name,
+		File:                file,
+		OrigImageDir:        dir,
+		InstallDir:          path.Join(g.InstallDir, subDir),
+		InstallSubDir:       subDir,
+		ThumbnailSize:       thumbnailSize,
+		LargeImageSize:      largeImageSize,
+		PageSize:            g.PageSize,
+		Workers:             g.Workers,
+		Verbose:             g.Verbose,
+		ForceGenerateImages: g.ForceGenerateImages,
+		ForceGenerateHTML:   g.ForceGenerateHTML,
+		GalleryName:         g.Name,
 	}
 
 	tagsRaw := strings.Split(tags, ",")

@@ -70,9 +70,19 @@ body {
 // makeGalleryHTML creates an HTML file that acts as the top level of the
 // gallery. This is a single page that links to all albums.
 func makeGalleryHTML(installDir, name string, albums []HTMLAlbum,
-	verbose bool) error {
+	verbose, forceGenerate bool) error {
 
-	err := makeDirIfNotExist(installDir)
+	htmlPath := path.Join(installDir, "index.html")
+	exists, err := fileExists(htmlPath)
+	if err != nil {
+		return fmt.Errorf("Failed to check if HTML exists: %s: %s", htmlPath, err)
+	}
+
+	if !forceGenerate && exists {
+		return nil
+	}
+
+	err = makeDirIfNotExist(installDir)
 	if err != nil {
 		return err
 	}
@@ -98,8 +108,6 @@ func makeGalleryHTML(installDir, name string, albums []HTMLAlbum,
 	if err != nil {
 		return fmt.Errorf("Unable to parse HTML template: %s", err)
 	}
-
-	htmlPath := path.Join(installDir, "index.html")
 
 	fh, err := os.Create(htmlPath)
 	if err != nil {
@@ -134,7 +142,24 @@ func makeGalleryHTML(installDir, name string, albums []HTMLAlbum,
 // generate and write an HTML page for an album.
 func makeAlbumPageHTML(totalPages, totalImages, page int,
 	images []HTMLImage, installDir, name, galleryName string,
-	verbose bool) error {
+	verbose, forceGenerate bool) error {
+
+	// Figure out filename to write.
+	// Page 1 is index.html. The rest are page-n.html
+	filename := "index.html"
+	if page > 1 {
+		filename = fmt.Sprintf("page-%d.html", page)
+	}
+
+	htmlPath := path.Join(installDir, filename)
+	exists, err := fileExists(htmlPath)
+	if err != nil {
+		return fmt.Errorf("Failed to check if HTML exists: %s: %s", htmlPath, err)
+	}
+
+	if !forceGenerate && exists {
+		return nil
+	}
 
 	const tpl = `<!DOCTYPE html>
 <meta charset="utf-8">
@@ -175,15 +200,6 @@ func makeAlbumPageHTML(totalPages, totalImages, page int,
 	if err != nil {
 		return fmt.Errorf("Unable to parse HTML template: %s", err)
 	}
-
-	// Figure out filename to write.
-	// Page 1 is index.html. The rest are page-n.html
-	filename := "index.html"
-	if page > 1 {
-		filename = fmt.Sprintf("page-%d.html", page)
-	}
-
-	htmlPath := path.Join(installDir, filename)
 
 	fh, err := os.Create(htmlPath)
 	if err != nil {
@@ -244,7 +260,17 @@ func makeAlbumPageHTML(totalPages, totalImages, page int,
 // Make an HTML page showing a single image. We show the larger size of the
 // image. We link to the original image.
 func makeImagePageHTML(image HTMLImage, dir string, totalImages int,
-	albumName, galleryName string, verbose bool) error {
+	albumName, galleryName string, verbose, forceGenerate bool) error {
+
+	htmlPath := path.Join(dir, fmt.Sprintf("image-%d.html", image.Index))
+	exists, err := fileExists(htmlPath)
+	if err != nil {
+		return fmt.Errorf("Failed to check if HTML exists: %s: %s", htmlPath, err)
+	}
+
+	if !forceGenerate && exists {
+		return nil
+	}
 
 	const tpl = `<!DOCTYPE html>
 <meta charset="utf-8">
@@ -282,8 +308,6 @@ func makeImagePageHTML(image HTMLImage, dir string, totalImages int,
 	if err != nil {
 		return fmt.Errorf("Unable to parse HTML template: %s", err)
 	}
-
-	htmlPath := path.Join(dir, fmt.Sprintf("image-%d.html", image.Index))
 
 	fh, err := os.Create(htmlPath)
 	if err != nil {

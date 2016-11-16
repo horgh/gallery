@@ -44,8 +44,11 @@ type Album struct {
 	// Whether to log verbosely.
 	Verbose bool
 
-	// Force generating images (e.g. thumbs) even if they exist.
-	ForceGenerate bool
+	// Force generation of images (e.g. thumbs) even if they exist.
+	ForceGenerateImages bool
+
+	// Force generation of HTML even if it exists.
+	ForceGenerateHTML bool
 
 	// Gallery's name. Human readable.
 	GalleryName string
@@ -243,7 +246,7 @@ func (a *Album) GenerateImages() error {
 			defer wg.Done()
 
 			for image := range ch {
-				err := image.makeImages(a.InstallDir, a.Verbose, a.ForceGenerate)
+				err := image.makeImages(a.InstallDir, a.Verbose, a.ForceGenerateImages)
 				if err != nil {
 					log.Printf("Problem making images: %s", err)
 				}
@@ -316,7 +319,8 @@ func (a *Album) GenerateHTML() error {
 
 		if len(htmlImages) == a.PageSize {
 			err := makeAlbumPageHTML(totalPages, len(a.chosenImages), page,
-				htmlImages, a.InstallDir, a.Name, a.GalleryName, a.Verbose)
+				htmlImages, a.InstallDir, a.Name, a.GalleryName, a.Verbose,
+				a.ForceGenerateHTML)
 			if err != nil {
 				return fmt.Errorf("Unable to generate album page HTML: %s", err)
 			}
@@ -326,7 +330,7 @@ func (a *Album) GenerateHTML() error {
 		}
 
 		err := makeImagePageHTML(htmlImage, a.InstallDir, len(a.chosenImages),
-			a.Name, a.GalleryName, a.Verbose)
+			a.Name, a.GalleryName, a.Verbose, a.ForceGenerateHTML)
 		if err != nil {
 			return fmt.Errorf("Unable to generate image page HTML: %s", err)
 		}
@@ -334,7 +338,7 @@ func (a *Album) GenerateHTML() error {
 
 	if len(htmlImages) > 0 {
 		err := makeAlbumPageHTML(totalPages, len(a.chosenImages), page, htmlImages,
-			a.InstallDir, a.Name, a.GalleryName, a.Verbose)
+			a.InstallDir, a.Name, a.GalleryName, a.Verbose, a.ForceGenerateHTML)
 		if err != nil {
 			return fmt.Errorf("Unable to generate/write HTML: %s", err)
 		}
