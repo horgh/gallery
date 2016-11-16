@@ -33,11 +33,12 @@ body {
 #albums {
 	text-align: center;
 }
+
 .album {
 	display: inline-block;
 	width: 250px;
 	max-width: 250px;
-	overflow: hidden;
+	text-align: left;
 }
 
 .album img {
@@ -46,10 +47,11 @@ body {
 
 .album p {
 	display: inline-block;
-	line-height: 100px;
 	vertical-align: top;
 	padding: 0;
 	margin: 0;
+	text-align: left;
+	max-width: 140px;
 }
 
 #nav {
@@ -57,7 +59,6 @@ body {
 }
 
 #images {
-	text-align: center;
 	margin: 0 50px 0 50px;
 }
 
