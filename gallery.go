@@ -118,6 +118,10 @@ func (g *Gallery) load(file string) error {
 			continue
 		}
 
+		if text[0] == '#' {
+			continue
+		}
+
 		pieces := strings.SplitN(text, "=", 2)
 		if len(pieces) != 2 {
 			_ = fh.Close()

@@ -120,6 +120,10 @@ func (a *Album) load() error {
 	for scanner.Scan() {
 		line := strings.TrimSpace(scanner.Text())
 
+		if len(line) > 0 && line[0] == '#' {
+			continue
+		}
+
 		if len(filename) == 0 {
 			// May have blank lines on their own.
 			if len(line) == 0 {
