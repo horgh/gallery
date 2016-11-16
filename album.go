@@ -118,9 +118,9 @@ func (a *Album) load() error {
 		line := strings.TrimSpace(scanner.Text())
 
 		if len(filename) == 0 {
+			// May have blank lines on their own.
 			if len(line) == 0 {
-				_ = fh.Close()
-				return fmt.Errorf("Expecting filename, but have a blank line.")
+				continue
 			}
 
 			filename = line
@@ -129,6 +129,11 @@ func (a *Album) load() error {
 
 		// Blank line ends a block describing one file.
 		if len(line) == 0 {
+			// May have blank lines on their own.
+			if len(filename) == 0 {
+				continue
+			}
+
 			a.images = append(a.images, &Image{
 				Path:           path.Join(a.OrigImageDir, filename),
 				Filename:       filename,
