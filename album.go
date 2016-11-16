@@ -210,13 +210,18 @@ func (a *Album) ChooseImages() error {
 	return nil
 }
 
-// GenerateImages creates smaller images than the raw ones for use in the HTML
-// page.
+// GenerateImages creates smaller images than the original ones for use in the
+// HTML page.
 //
-// This includes one that is "full size" (but still smaller) and one that is a
-// thumbnail. We link to the full size one from the main page. We place the
-// resized images in the thumbs directory. We only resize if the resized image
-// is not already present. We do this only for chosen images.
+// This includes one that is a large size (but still usually smaller than the
+// original).
+//
+// We also generate thumbnails.
+//
+// We only generate images if the target does not yet exist (unless asked to
+// do so).
+//
+// We only look at chosen images.
 func (a *Album) GenerateImages() error {
 	ch := make(chan *Image)
 
