@@ -18,13 +18,10 @@ type Args struct {
 	// Path to a file describing gallery to build.
 	GalleryFile string
 
-	// Path to a directory to store resized images.
-	ResizedDir string
-
-	// Path to a directory to output the finished product. HTML and images.
+	// Path to a directory to output the HTML and images.
 	InstallDir string
 
-	// Title/name of the gallery.
+	// Name of the gallery. Human readable.
 	Name string
 
 	// Whether to log verbosely.
@@ -33,10 +30,10 @@ type Args struct {
 	// Force generating images (e.g. thumbs) even if they exist.
 	ForceGenerate bool
 
-	// Images per page (in albums).
+	// Images per page (inside albums).
 	PageSize int
 
-	// Number of workers to use in resizing images.
+	// Number of workers to use when resizing images.
 	Workers int
 }
 
@@ -53,12 +50,11 @@ func main() {
 
 	gallery := &gallery.Gallery{
 		File:          args.GalleryFile,
-		ResizedDir:    args.ResizedDir,
 		InstallDir:    args.InstallDir,
 		Name:          args.Name,
 		Verbose:       args.Verbose,
-		PageSize:      args.PageSize,
 		ForceGenerate: args.ForceGenerate,
+		PageSize:      args.PageSize,
 		Workers:       args.Workers,
 	}
 
@@ -71,7 +67,6 @@ func main() {
 func getArgs() (*Args, error) {
 	galleryFile := flag.String("gallery-file", "", "Path to a file describing the gallery to build.")
 	installDir := flag.String("install-dir", "", "Path to a directory to output HTML/images.")
-	resizedDir := flag.String("resized-dir", "", "Path to a directory to store resized images. If not given, output directly to the install directory.")
 	title := flag.String("title", "Gallery", "Name/title of the gallery.")
 	verbose := flag.Bool("verbose", false, "Toggle verbose logging.")
 	pageSize := flag.Int("page-size", 20, "Number of image thumbnails per page in albums.")
@@ -88,17 +83,12 @@ func getArgs() (*Args, error) {
 		return nil, fmt.Errorf("You must provide an install directory.")
 	}
 
-	if len(*resizedDir) == 0 {
-		*resizedDir = *installDir
-	}
-
 	if len(*title) == 0 {
 		return nil, fmt.Errorf("You must provide a title.")
 	}
 
 	return &Args{
 		GalleryFile:   *galleryFile,
-		ResizedDir:    *resizedDir,
 		InstallDir:    *installDir,
 		Name:          *title,
 		Verbose:       *verbose,

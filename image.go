@@ -15,20 +15,20 @@ type Image struct {
 	// Full path to the image.
 	Path string
 
-	// Image's basename.
+	// Image's base filename.
 	Filename string
 
-	// Human readable description of the file.
+	// Human readable description of the image.
 	Description string
 
 	// Tags assigned to the image.
 	Tags []string
 
-	// Size for the thumbnail. Width in pixels.
+	// Size for the thumbnail. Height/width in pixels.
 	ThumbnailSize int
 
 	// Size for the larger version of the image (which is still likely smaller
-	// than the original image). Width in pixels.
+	// than the original image). Maximum of width/height in pixels.
 	LargeImageSize int
 
 	// Path to the thumbnail.
@@ -60,20 +60,21 @@ func (i Image) hasTag(tag string) bool {
 	return false
 }
 
-func (i *Image) makeImages(resizeDir string, verbose,
-	forceGenerate bool) error {
-	err := i.makeThumbnail(resizeDir, verbose, forceGenerate)
+// Generate all images from the original, if necessary.
+func (i *Image) makeImages(dir string, verbose, forceGenerate bool) error {
+	err := i.makeThumbnail(dir, verbose, forceGenerate)
 	if err != nil {
 		return err
 	}
 
-	return i.makeLargeImage(resizeDir, verbose, forceGenerate)
+	return i.makeLargeImage(dir, verbose, forceGenerate)
 }
 
-func (i *Image) makeThumbnail(resizeDir string, verbose,
-	forceGenerate bool) error {
-	resizeFile, err := i.getResizedFilename(resizeDir, i.ThumbnailSize,
-		i.ThumbnailSize)
+// Create a thumbnail image.
+//
+// It is thumbnailsize by thumbnailsize. We shrink it down then crop.
+func (i *Image) makeThumbnail(dir string, verbose, forceGenerate bool) error {
+	resizeFile, err := i.getResizedFilename(dir, i.ThumbnailSize, i.ThumbnailSize)
 	if err != nil {
 		return err
 	}
@@ -154,9 +155,10 @@ func (i *Image) makeThumbnail(resizeDir string, verbose,
 	return nil
 }
 
-func (i *Image) makeLargeImage(resizeDir string, verbose,
-	forceGenerate bool) error {
-	resizeFile, err := i.getResizedFilename(resizeDir, i.LargeImageSize, -1)
+// Make a large version of the image. It is still shrunken from the original in
+// most cases.
+func (i *Image) makeLargeImage(dir string, verbose, forceGenerate bool) error {
+	resizeFile, err := i.getResizedFilename(dir, i.LargeImageSize, -1)
 	if err != nil {
 		return err
 	}
@@ -234,8 +236,7 @@ func (i *Image) makeLargeImage(resizeDir string, verbose,
 	return nil
 }
 
-// getResizedFilename gets the filename and path to the file with the given
-// width.
+// getResizedFilename decides the path to the file with the given width/height.
 func (i Image) getResizedFilename(dir string, width,
 	height int) (string, error) {
 

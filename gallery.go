@@ -8,7 +8,11 @@ import (
 	"strings"
 )
 
+// Thumbnails are this size in pixels. Width and height are the same.
 const thumbnailSize = 100
+
+// Larger version of images (but smaller than original) have this size in pixels
+// as their longest side.
 const largeImageSize = 595
 
 // Gallery holds information about a full gallery site which contains 1 or
@@ -17,14 +21,10 @@ type Gallery struct {
 	// File describing the gallery and its albums.
 	File string
 
-	// Directory where we output resized images.
-	ResizedDir string
-
-	// Directory where we output the finished product including images and
-	// HTML.
+	// Directory where we output including images and HTML.
 	InstallDir string
 
-	// Name of the gallery. Its title.
+	// Name of the gallery.
 	Name string
 
 	// Whether to log verbosely.
@@ -56,11 +56,6 @@ func (g *Gallery) Install() error {
 		return err
 	}
 
-	err = makeDirIfNotExist(g.ResizedDir)
-	if err != nil {
-		return err
-	}
-
 	htmlAlbums := []HTMLAlbum{}
 
 	for _, album := range g.albums {
@@ -71,10 +66,10 @@ func (g *Gallery) Install() error {
 		}
 
 		htmlAlbums = append(htmlAlbums, HTMLAlbum{
-			URL: fmt.Sprintf("%s/index.html", album.SubDir),
-			ThumbURL: fmt.Sprintf("%s/%s", album.SubDir,
+			URL: fmt.Sprintf("%s/index.html", album.InstallSubDir),
+			ThumbURL: fmt.Sprintf("%s/%s", album.InstallSubDir,
 				album.GetThumb().ThumbnailFilename),
-			Title: album.Name,
+			Name: album.Name,
 		})
 	}
 
@@ -205,9 +200,8 @@ func (g *Gallery) loadAlbum(name, dir, subDir, file, tags string) error {
 		Name:           name,
 		File:           file,
 		OrigImageDir:   dir,
-		ResizedDir:     path.Join(g.ResizedDir, subDir),
 		InstallDir:     path.Join(g.InstallDir, subDir),
-		SubDir:         subDir,
+		InstallSubDir:  subDir,
 		ThumbnailSize:  thumbnailSize,
 		LargeImageSize: largeImageSize,
 		PageSize:       g.PageSize,

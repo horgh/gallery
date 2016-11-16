@@ -13,7 +13,7 @@ import (
 
 // Album holds information about an album of images.
 type Album struct {
-	// Name/title.
+	// Name.
 	Name string
 
 	// File describing images in the album.
@@ -22,18 +22,11 @@ type Album struct {
 	// Dir containing the original images.
 	OrigImageDir string
 
-	// Dir to output/find resized images in.
-	ResizedDir string
-
 	// Dir to install HTML/images.
 	InstallDir string
 
-	// Subdirectory we will be in.
-	SubDir string
-
-	// Tags tells us to include images that has one of these tags. If there are
-	// no tags specified, then include all images.
-	Tags []string
+	// Subdirectory we will be in in the installation dir.
+	InstallSubDir string
 
 	// Image thumbnail size. Width. Pixels.
 	ThumbnailSize int
@@ -54,8 +47,12 @@ type Album struct {
 	// Force generating images (e.g. thumbs) even if they exist.
 	ForceGenerate bool
 
-	// Gallery's name/title.
+	// Gallery's name. Human readable.
 	GalleryName string
+
+	// Tags tells us to include images that has one of these tags. If there are
+	// no tags specified, then include all images.
+	Tags []string
 
 	// All available images. Parsed from the album file.
 	images []*Image
@@ -74,7 +71,7 @@ type Album struct {
 // Then should come the next filename, or end of file.
 //
 // This means each block describes information about one file.
-func (a *Album) LoadAlbumFile() error {
+func (a *Album) load() error {
 	fh, err := os.Open(a.File)
 	if err != nil {
 		return fmt.Errorf("Unable to open: %s: %s", a.File, err)
@@ -162,7 +159,7 @@ func (a *Album) LoadAlbumFile() error {
 // Install loads image information, and then chooses, resizes, builds HTML, and
 // installs the HTML and images.
 func (a *Album) Install() error {
-	err := a.LoadAlbumFile()
+	err := a.load()
 	if err != nil {
 		return fmt.Errorf("Unable to parse metadata file: %s", err)
 	}
@@ -221,11 +218,6 @@ func (a *Album) ChooseImages() error {
 // resized images in the thumbs directory. We only resize if the resized image
 // is not already present. We do this only for chosen images.
 func (a *Album) GenerateImages() error {
-	err := makeDirIfNotExist(a.ResizedDir)
-	if err != nil {
-		return err
-	}
-
 	ch := make(chan *Image)
 
 	wg := sync.WaitGroup{}
@@ -236,7 +228,7 @@ func (a *Album) GenerateImages() error {
 			defer wg.Done()
 
 			for image := range ch {
-				err := image.makeImages(a.ResizedDir, a.Verbose, a.ForceGenerate)
+				err := image.makeImages(a.InstallDir, a.Verbose, a.ForceGenerate)
 				if err != nil {
 					log.Printf("Problem making images: %s", err)
 				}
@@ -330,8 +322,8 @@ func (a *Album) GenerateHTML() error {
 			page++
 		}
 
-		err := makeImagePageHTML(htmlImage, a.InstallDir, a.Name,
-			len(a.chosenImages), a.Name, a.GalleryName)
+		err := makeImagePageHTML(htmlImage, a.InstallDir, len(a.chosenImages),
+			a.Name, a.GalleryName)
 		if err != nil {
 			return fmt.Errorf("Unable to generate image page HTML: %s", err)
 		}

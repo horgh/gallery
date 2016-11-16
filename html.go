@@ -21,7 +21,7 @@ type HTMLImage struct {
 type HTMLAlbum struct {
 	URL      string
 	ThumbURL string
-	Title    string
+	Name     string
 }
 
 const css = `
@@ -68,17 +68,17 @@ body {
 
 // generate and write an HTML page for an album.
 func makeAlbumPageHTML(totalPages, totalImages, page int,
-	images []HTMLImage, installDir, title, galleryTitle string) error {
+	images []HTMLImage, installDir, name, galleryName string) error {
 
 	const tpl = `<!DOCTYPE html>
 <meta charset="utf-8">
-<title>{{.Title}} - {{.GalleryTitle}}</title>
+<title>{{.Name}} - {{.GalleryName}}</title>
 <style>` + css + `</style>
-<h1>{{.Title}} ({{.TotalImages}} images)</h1>
+<h1>{{.Name}} ({{.TotalImages}} images)</h1>
 
 <div id="nav">
 	Navigation:
-	<a href="..">Back to {{.GalleryTitle}}</a>
+	<a href="..">Back to {{.GalleryName}}</a>
 
 	{{if gt .Page 1}}
 		| <a href="{{.PreviousURL}}">Previous page</a>
@@ -138,23 +138,23 @@ func makeAlbumPageHTML(totalPages, totalImages, page int,
 	}
 
 	data := struct {
-		Title        string
-		GalleryTitle string
-		Images       []HTMLImage
-		TotalPages   int
-		Page         int
-		TotalImages  int
-		PreviousURL  string
-		NextURL      string
+		Name        string
+		GalleryName string
+		Images      []HTMLImage
+		TotalPages  int
+		Page        int
+		TotalImages int
+		PreviousURL string
+		NextURL     string
 	}{
-		Title:        title,
-		GalleryTitle: galleryTitle,
-		Images:       images,
-		TotalPages:   totalPages,
-		Page:         page,
-		TotalImages:  totalImages,
-		PreviousURL:  previousURL,
-		NextURL:      nextURL,
+		Name:        name,
+		GalleryName: galleryName,
+		Images:      images,
+		TotalPages:  totalPages,
+		Page:        page,
+		TotalImages: totalImages,
+		PreviousURL: previousURL,
+		NextURL:     nextURL,
 	}
 
 	err = t.Execute(fh, data)
@@ -174,19 +174,19 @@ func makeAlbumPageHTML(totalPages, totalImages, page int,
 
 // Make an HTML page showing a single image. We show the larger size of the
 // image. We link to the original image.
-func makeImagePageHTML(image HTMLImage, dir, albumName string,
-	totalImages int, albumTitle, galleryTitle string) error {
+func makeImagePageHTML(image HTMLImage, dir string, totalImages int,
+	albumName, galleryName string) error {
 
 	const tpl = `<!DOCTYPE html>
 <meta charset="utf-8">
-<title>{{.ImageName}} - {{.AlbumTitle}} - {{.GalleryTitle}}</title>
+<title>{{.ImageName}} - {{.AlbumName}} - {{.GalleryName}}</title>
 <style>` + css + `</style>
 <h1>{{.ImageName}}</h1>
 
 <div id="nav">
 	Navigation:
-	<a href="..">Back to {{.GalleryTitle}}</a> |
-	<a href="index.html">Back to {{.AlbumTitle}}</a>
+	<a href="..">Back to {{.GalleryName}}</a> |
+	<a href="index.html">Back to {{.AlbumName}}</a>
 
 	{{if .PreviousURL}}
 		| <a href="{{.PreviousURL}}">Previous image</a>
@@ -232,8 +232,8 @@ func makeImagePageHTML(image HTMLImage, dir, albumName string,
 
 	data := struct {
 		ImageName        string
-		AlbumTitle       string
-		GalleryTitle     string
+		AlbumName        string
+		GalleryName      string
 		OriginalImageURL string
 		FullImageURL     string
 		Description      string
@@ -241,8 +241,8 @@ func makeImagePageHTML(image HTMLImage, dir, albumName string,
 		PreviousURL      string
 	}{
 		ImageName:        image.OriginalImageURL,
-		AlbumTitle:       albumTitle,
-		GalleryTitle:     galleryTitle,
+		AlbumName:        albumName,
+		GalleryName:      galleryName,
 		OriginalImageURL: image.OriginalImageURL,
 		FullImageURL:     image.FullImageURL,
 		Description:      image.Description,
@@ -275,15 +275,15 @@ func makeGalleryHTML(installDir, name string, albums []HTMLAlbum) error {
 
 	const tpl = `<!DOCTYPE html>
 <meta charset="utf-8">
-<title>{{.Title}}</title>
+<title>{{.Name}}</title>
 <style>` + css + `</style>
-<h1>{{.Title}}</h1>
+<h1>{{.Name}}</h1>
 
 <div id="albums">
 	{{range .Albums}}
 		<div class="album">
 			<a href="{{.URL}}"><img src="{{.ThumbURL}}"></a>
-			<p><a href="{{.URL}}">{{.Title}}</a></p>
+			<p><a href="{{.URL}}">{{.Name}}</a></p>
 		</div>
 	{{end}}
 </div>
@@ -302,10 +302,10 @@ func makeGalleryHTML(installDir, name string, albums []HTMLAlbum) error {
 	}
 
 	data := struct {
-		Title  string
+		Name   string
 		Albums []HTMLAlbum
 	}{
-		Title:  name,
+		Name:   name,
 		Albums: albums,
 	}
 
