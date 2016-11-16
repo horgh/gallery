@@ -271,7 +271,7 @@ func (a *Album) InstallImages() error {
 
 		// It may be there already.
 		_, err := os.Stat(origTarget)
-		if err != nil {
+		if err == nil {
 			continue
 		}
 
