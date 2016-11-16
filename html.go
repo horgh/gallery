@@ -78,6 +78,7 @@ func makeGalleryHTML(installDir, name string, albums []HTMLAlbum) error {
 	const tpl = `<!DOCTYPE html>
 <meta charset="utf-8">
 <title>{{.Name}}</title>
+<meta name="viewport" content="width=device-width, user-scalable=no">
 <style>` + css + `</style>
 <h1>{{.Name}}</h1>
 
@@ -133,6 +134,7 @@ func makeAlbumPageHTML(totalPages, totalImages, page int,
 	const tpl = `<!DOCTYPE html>
 <meta charset="utf-8">
 <title>{{.Name}} - {{.GalleryName}}</title>
+<meta name="viewport" content="width=device-width, user-scalable=no">
 <style>` + css + `</style>
 <h1>{{.Name}} ({{.TotalImages}} images)</h1>
 
@@ -240,6 +242,7 @@ func makeImagePageHTML(image HTMLImage, dir string, totalImages int,
 	const tpl = `<!DOCTYPE html>
 <meta charset="utf-8">
 <title>{{.ImageName}} - {{.AlbumName}} - {{.GalleryName}}</title>
+<meta name="viewport" content="width=device-width, user-scalable=no">
 <style>` + css + `</style>
 <h1>{{.ImageName}}</h1>
 
