@@ -223,6 +223,11 @@ func (a *Album) ChooseImages() error {
 //
 // We only look at chosen images.
 func (a *Album) GenerateImages() error {
+	err := makeDirIfNotExist(a.InstallDir)
+	if err != nil {
+		return err
+	}
+
 	ch := make(chan *Image)
 
 	wg := sync.WaitGroup{}

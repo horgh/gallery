@@ -69,7 +69,7 @@ func getArgs() (*Args, error) {
 	installDir := flag.String("install-dir", "", "Path to a directory to output HTML/images.")
 	title := flag.String("title", "Gallery", "Name/title of the gallery.")
 	verbose := flag.Bool("verbose", false, "Toggle verbose logging.")
-	pageSize := flag.Int("page-size", 20, "Number of image thumbnails per page in albums.")
+	pageSize := flag.Int("page-size", 50, "Number of image thumbnails per page in albums.")
 	forceGenerate := flag.Bool("force-generate", false, "Force regenerating resized images. Normally we only do so if they don't exist.")
 	workers := flag.Int("workers", 4, "Number of workers for image resizing.")
 
