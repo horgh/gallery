@@ -24,6 +24,48 @@ type HTMLAlbum struct {
 	Title    string
 }
 
+const css = `
+body {
+	margin: 0;
+	padding: 0;
+}
+
+#albums {
+	text-align: center;
+}
+.album {
+	display: inline-block;
+	width: 250px;
+	max-width: 250px;
+	overflow: hidden;
+}
+
+.album img {
+	display: inline-block;
+}
+
+.album p {
+	display: inline-block;
+	line-height: 100px;
+	vertical-align: top;
+	padding: 0;
+	margin: 0;
+}
+
+#nav {
+	margin: 15px 0 15px 0;
+}
+
+#images {
+	text-align: center;
+	margin: 0 50px 0 50px;
+}
+
+.image {
+	display: inline-block;
+}
+`
+
 // generate and write an HTML page for an album.
 func makeAlbumPageHTML(totalPages, totalImages, page int,
 	images []HTMLImage, installDir, title, galleryTitle string) error {
@@ -31,29 +73,35 @@ func makeAlbumPageHTML(totalPages, totalImages, page int,
 	const tpl = `<!DOCTYPE html>
 <meta charset="utf-8">
 <title>{{.Title}} - {{.GalleryTitle}}</title>
-<h1>{{.Title}}</h1>
+<style>` + css + `</style>
+<h1>{{.Title}} ({{.TotalImages}} images)</h1>
 
-<a href="..">{{.GalleryTitle}}</a>
-
-{{range .Images}}
-	<div class="image">
-		<a href="image-{{.Index}}.html">
-			<img src="{{.ThumbImageURL}}">
-		</a>
-	</div>
-{{end}}
-
-{{if gt .TotalPages 1}}
-	<p>This is page {{.Page}} of {{.TotalPages}} of images.</p>
+<div id="nav">
+	Navigation:
+	<a href="..">Back to {{.GalleryTitle}}</a>
 
 	{{if gt .Page 1}}
-		<p><a href="{{.PreviousURL}}">Previous page</a></p>
+		| <a href="{{.PreviousURL}}">Previous page</a>
 	{{end}}
 
 	{{if lt .Page .TotalPages}}
-		<p><a href="{{.NextURL}}">Next page</a></p>
+		| <a href="{{.NextURL}}">Next page</a>
 	{{end}}
-{{end}}
+
+	{{if gt .TotalPages 1}}
+		(This is page {{.Page}}/{{.TotalPages}})
+	{{end}}
+</div>
+
+<div id="images">
+	{{range .Images}}
+		<div class="image">
+			<a href="image-{{.Index}}.html">
+				<img src="{{.ThumbImageURL}}">
+			</a>
+		</div>
+	{{end}}
+</div>
 `
 
 	t, err := template.New("page").Parse(tpl)
@@ -95,6 +143,7 @@ func makeAlbumPageHTML(totalPages, totalImages, page int,
 		Images       []HTMLImage
 		TotalPages   int
 		Page         int
+		TotalImages  int
 		PreviousURL  string
 		NextURL      string
 	}{
@@ -103,6 +152,7 @@ func makeAlbumPageHTML(totalPages, totalImages, page int,
 		Images:       images,
 		TotalPages:   totalPages,
 		Page:         page,
+		TotalImages:  totalImages,
 		PreviousURL:  previousURL,
 		NextURL:      nextURL,
 	}
@@ -130,10 +180,22 @@ func makeImagePageHTML(image HTMLImage, dir, albumName string,
 	const tpl = `<!DOCTYPE html>
 <meta charset="utf-8">
 <title>{{.ImageName}} - {{.AlbumTitle}} - {{.GalleryTitle}}</title>
+<style>` + css + `</style>
 <h1>{{.ImageName}}</h1>
 
-<a href="..">{{.GalleryTitle}}</a> |
-<a href="index.html">{{.AlbumTitle}}</a>
+<div id="nav">
+	Navigation:
+	<a href="..">Back to {{.GalleryTitle}}</a> |
+	<a href="index.html">Back to {{.AlbumTitle}}</a>
+
+	{{if .PreviousURL}}
+		| <a href="{{.PreviousURL}}">Previous image</a>
+	{{end}}
+
+	{{if .NextURL}}
+		| <a href="{{.NextURL}}">Next image</a>
+	{{end}}
+</div>
 
 <div class="image-large">
 	<a href="{{.OriginalImageURL}}">
@@ -144,14 +206,6 @@ func makeImagePageHTML(image HTMLImage, dir, albumName string,
 		<p>{{.Description}}</p>
 	{{end}}
 </div>
-
-{{if .PreviousURL}}
-	<a href="{{.PreviousURL}}">Previous</a>
-{{end}}
-
-{{if .NextURL}}
-	<a href="{{.NextURL}}">Next</a>
-{{end}}
 `
 
 	t, err := template.New("page").Parse(tpl)
@@ -222,16 +276,17 @@ func makeGalleryHTML(installDir, name string, albums []HTMLAlbum) error {
 	const tpl = `<!DOCTYPE html>
 <meta charset="utf-8">
 <title>{{.Title}}</title>
+<style>` + css + `</style>
 <h1>{{.Title}}</h1>
 
-{{range .Albums}}
-	<div class="album">
-		<a href="{{.URL}}">
-			<img src="{{.ThumbURL}}">
-		</a>
-		<p>{{.Title}}</p>
-	</div>
-{{end}}
+<div id="albums">
+	{{range .Albums}}
+		<div class="album">
+			<a href="{{.URL}}"><img src="{{.ThumbURL}}"></a>
+			<p><a href="{{.URL}}">{{.Title}}</a></p>
+		</div>
+	{{end}}
+</div>
 `
 
 	t, err := template.New("page").Parse(tpl)
