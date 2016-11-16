@@ -73,7 +73,7 @@ func (g *Gallery) Install() error {
 		})
 	}
 
-	err = makeGalleryHTML(g.InstallDir, g.Name, htmlAlbums)
+	err = makeGalleryHTML(g.InstallDir, g.Name, htmlAlbums, g.Verbose)
 	if err != nil {
 		return fmt.Errorf("Unable to make gallery HTML: %s", err)
 	}

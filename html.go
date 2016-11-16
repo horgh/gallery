@@ -69,7 +69,9 @@ body {
 
 // makeGalleryHTML creates an HTML file that acts as the top level of the
 // gallery. This is a single page that links to all albums.
-func makeGalleryHTML(installDir, name string, albums []HTMLAlbum) error {
+func makeGalleryHTML(installDir, name string, albums []HTMLAlbum,
+	verbose bool) error {
+
 	err := makeDirIfNotExist(installDir)
 	if err != nil {
 		return err
@@ -123,13 +125,16 @@ func makeGalleryHTML(installDir, name string, albums []HTMLAlbum) error {
 		return fmt.Errorf("Close: %s", err)
 	}
 
-	log.Printf("Wrote HTML file: %s", htmlPath)
+	if verbose {
+		log.Printf("Wrote HTML file: %s", htmlPath)
+	}
 	return nil
 }
 
 // generate and write an HTML page for an album.
 func makeAlbumPageHTML(totalPages, totalImages, page int,
-	images []HTMLImage, installDir, name, galleryName string) error {
+	images []HTMLImage, installDir, name, galleryName string,
+	verbose bool) error {
 
 	const tpl = `<!DOCTYPE html>
 <meta charset="utf-8">
@@ -230,14 +235,16 @@ func makeAlbumPageHTML(totalPages, totalImages, page int,
 		return fmt.Errorf("Close: %s", err)
 	}
 
-	log.Printf("Wrote HTML file: %s", htmlPath)
+	if verbose {
+		log.Printf("Wrote HTML file: %s", htmlPath)
+	}
 	return nil
 }
 
 // Make an HTML page showing a single image. We show the larger size of the
 // image. We link to the original image.
 func makeImagePageHTML(image HTMLImage, dir string, totalImages int,
-	albumName, galleryName string) error {
+	albumName, galleryName string, verbose bool) error {
 
 	const tpl = `<!DOCTYPE html>
 <meta charset="utf-8">
@@ -324,6 +331,8 @@ func makeImagePageHTML(image HTMLImage, dir string, totalImages int,
 		return fmt.Errorf("Close: %s", err)
 	}
 
-	log.Printf("Wrote HTML file: %s", htmlPath)
+	if verbose {
+		log.Printf("Wrote HTML file: %s", htmlPath)
+	}
 	return nil
 }

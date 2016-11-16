@@ -316,7 +316,7 @@ func (a *Album) GenerateHTML() error {
 
 		if len(htmlImages) == a.PageSize {
 			err := makeAlbumPageHTML(totalPages, len(a.chosenImages), page,
-				htmlImages, a.InstallDir, a.Name, a.GalleryName)
+				htmlImages, a.InstallDir, a.Name, a.GalleryName, a.Verbose)
 			if err != nil {
 				return fmt.Errorf("Unable to generate album page HTML: %s", err)
 			}
@@ -326,7 +326,7 @@ func (a *Album) GenerateHTML() error {
 		}
 
 		err := makeImagePageHTML(htmlImage, a.InstallDir, len(a.chosenImages),
-			a.Name, a.GalleryName)
+			a.Name, a.GalleryName, a.Verbose)
 		if err != nil {
 			return fmt.Errorf("Unable to generate image page HTML: %s", err)
 		}
@@ -334,7 +334,7 @@ func (a *Album) GenerateHTML() error {
 
 	if len(htmlImages) > 0 {
 		err := makeAlbumPageHTML(totalPages, len(a.chosenImages), page, htmlImages,
-			a.InstallDir, a.Name, a.GalleryName)
+			a.InstallDir, a.Name, a.GalleryName, a.Verbose)
 		if err != nil {
 			return fmt.Errorf("Unable to generate/write HTML: %s", err)
 		}
