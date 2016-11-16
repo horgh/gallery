@@ -269,7 +269,13 @@ func (a *Album) InstallImages() error {
 	for _, image := range a.chosenImages {
 		origTarget := path.Join(a.InstallDir, image.Filename)
 
-		err := copyFile(image.Path, origTarget)
+		// It may be there already.
+		_, err := os.Stat(origTarget)
+		if err != nil {
+			continue
+		}
+
+		err = copyFile(image.Path, origTarget)
 		if err != nil {
 			return fmt.Errorf("Unable to copy %s to %s: %s", image.Path, origTarget,
 				err)
