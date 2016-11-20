@@ -33,6 +33,9 @@ type Args struct {
 	// Force generation of HTML even if it exists.
 	ForceGenerateHTML bool
 
+	// Force generation of Zips even if they exist.
+	ForceGenerateZip bool
+
 	// Images per page (inside albums).
 	PageSize int
 
@@ -58,6 +61,7 @@ func main() {
 		Verbose:             args.Verbose,
 		ForceGenerateImages: args.ForceGenerateImages,
 		ForceGenerateHTML:   args.ForceGenerateHTML,
+		ForceGenerateZip:    args.ForceGenerateZip,
 		PageSize:            args.PageSize,
 		Workers:             args.Workers,
 	}
@@ -76,6 +80,7 @@ func getArgs() (*Args, error) {
 	pageSize := flag.Int("page-size", 50, "Number of image thumbnails per page in albums.")
 	forceGenerateImages := flag.Bool("generate-images", false, "Force regenerating resized images. Normally we only do so if they don't exist.")
 	forceGenerateHTML := flag.Bool("generate-html", false, "Force regenerating HTML. Normally we only do so if it does not exist.")
+	forceGenerateZip := flag.Bool("generate-zip", false, "Force regenerating zip files. Normally we only do so if they do not exist.")
 	workers := flag.Int("workers", 4, "Number of workers for image resizing.")
 
 	flag.Parse()
@@ -100,6 +105,7 @@ func getArgs() (*Args, error) {
 		PageSize:            *pageSize,
 		ForceGenerateImages: *forceGenerateImages,
 		ForceGenerateHTML:   *forceGenerateHTML,
+		ForceGenerateZip:    *forceGenerateZip,
 		Workers:             *workers,
 	}, nil
 }

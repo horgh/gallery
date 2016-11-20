@@ -1,8 +1,10 @@
 package gallery
 
 import (
+	"archive/zip"
 	"bufio"
 	"fmt"
+	"io"
 	"log"
 	"math/rand"
 	"os"
@@ -50,6 +52,9 @@ type Album struct {
 	// Force generation of HTML even if it exists.
 	ForceGenerateHTML bool
 
+	// Force generation of Zips even if they exist.
+	ForceGenerateZip bool
+
 	// Gallery's name. Human readable.
 	GalleryName string
 
@@ -90,6 +95,11 @@ func (a *Album) Install() error {
 	err = a.InstallImages()
 	if err != nil {
 		return fmt.Errorf("Unable to install images: %s", err)
+	}
+
+	err = a.makeZip()
+	if err != nil {
+		return fmt.Errorf("Unable to create zip file: %s", err)
 	}
 
 	return nil
@@ -290,6 +300,83 @@ func (a *Album) InstallImages() error {
 	}
 
 	return nil
+}
+
+// Make a zip file containing all images in the album.
+func (a *Album) makeZip() error {
+	zipPath := a.getZipPath()
+
+	// Don't create it if it is there already.
+	if !a.ForceGenerateZip {
+		_, err := os.Stat(zipPath)
+		if err == nil {
+			return nil
+		}
+	}
+
+	if a.Verbose {
+		log.Printf("Making zip file: %s...", zipPath)
+	}
+
+	zipFH, err := os.Create(zipPath)
+	if err != nil {
+		return err
+	}
+
+	zipWriter := zip.NewWriter(zipFH)
+
+	for _, image := range a.chosenImages {
+		imageFH, err := os.Open(image.Path)
+		if err != nil {
+			_ = zipFH.Close()
+			_ = zipWriter.Close()
+			return err
+		}
+
+		zipFileFH, err := zipWriter.Create(image.Filename)
+		if err != nil {
+			_ = zipFH.Close()
+			_ = zipWriter.Close()
+			_ = imageFH.Close()
+			return err
+		}
+
+		_, err = io.Copy(zipFileFH, imageFH)
+		if err != nil {
+			_ = zipFH.Close()
+			_ = zipWriter.Close()
+			_ = imageFH.Close()
+			return err
+		}
+
+		err = imageFH.Close()
+		if err != nil {
+			_ = zipFH.Close()
+			_ = zipWriter.Close()
+			return err
+		}
+	}
+
+	err = zipWriter.Close()
+	if err != nil {
+		_ = zipFH.Close()
+		return err
+	}
+
+	err = zipFH.Close()
+	if err != nil {
+		return err
+	}
+
+	if a.Verbose {
+		log.Printf("Wrote zip: %s", zipPath)
+	}
+
+	return nil
+}
+
+func (a *Album) getZipPath() string {
+	return path.Join(a.InstallDir, fmt.Sprintf("%s.zip", a.Name))
 }
 
 // GenerateHTML does just that!

@@ -59,7 +59,7 @@ body {
 }
 
 #images {
-	margin: 0 50px 0 50px;
+	margin: 0 50px 15px 50px;
 }
 
 .image {
@@ -68,7 +68,7 @@ body {
 
 @media all and (max-width: 600px) {
   #images {
-    margin: 0;
+    margin: 0 0 15px 0;
   }
 }
 `
@@ -204,6 +204,8 @@ func makeAlbumPageHTML(totalPages, totalImages, page int,
 		</div>
 	{{end}}
 </div>
+
+<a href="{{.Name}}.zip">Download all images (.zip)</a>
 `
 
 	t, err := template.New("page").Parse(tpl)

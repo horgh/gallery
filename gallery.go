@@ -36,6 +36,9 @@ type Gallery struct {
 	// Force generation of HTML even if it exists.
 	ForceGenerateHTML bool
 
+	// Force generation of Zips even if they exist.
+	ForceGenerateZip bool
+
 	// Number of image thumbnails per page in albums.
 	PageSize int
 
@@ -217,6 +220,7 @@ func (g *Gallery) loadAlbum(name, dir, subDir, file, tags string) error {
 		Verbose:             g.Verbose,
 		ForceGenerateImages: g.ForceGenerateImages,
 		ForceGenerateHTML:   g.ForceGenerateHTML,
+		ForceGenerateZip:    g.ForceGenerateZip,
 		GalleryName:         g.Name,
 	}
 
