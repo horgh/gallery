@@ -65,6 +65,12 @@ body {
 .image {
 	display: inline-block;
 }
+
+@media all and (max-width: 600px) {
+  #images {
+    margin: 0;
+  }
+}
 `
 
 // makeGalleryHTML creates an HTML file that acts as the top level of the
