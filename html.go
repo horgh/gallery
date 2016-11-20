@@ -287,6 +287,41 @@ func makeImagePageHTML(image HTMLImage, dir string, totalImages int,
 <title>{{.ImageName}} - {{.AlbumName}} - {{.GalleryName}}</title>
 <meta name="viewport" content="width=device-width, user-scalable=no">
 <style>` + css + `</style>
+<script>
+"use strict";
+
+var G = {};
+
+document.addEventListener('DOMContentLoaded', function() {
+	document.addEventListener('keydown', function(evt) {
+		evt.preventDefault();
+
+		// Left arrow key.
+		if (evt.keyCode === 37) {
+			G.goToPreviousImagePage();
+		}
+
+		// Right arrow key.
+		if (evt.keyCode === 39) {
+			G.goToNextImagePage();
+		}
+	});
+});
+
+G.goToNextImagePage = function() {
+	if ("{{.NextURL}}" === "") {
+		return;
+	}
+	window.location.href = "{{.NextURL}}";
+};
+
+G.goToPreviousImagePage = function() {
+	if ("{{.PreviousURL}}" === "") {
+		return;
+	}
+	window.location.href = "{{.PreviousURL}}";
+};
+</script>
 <h1>{{.ImageName}}</h1>
 
 <div id="nav">
