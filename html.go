@@ -180,10 +180,14 @@ func makeAlbumPageHTML(totalPages, totalImages, page int,
 
 	{{if gt .Page 1}}
 		| <a href="{{.PreviousURL}}">Previous page</a>
+	{{else}}
+		| Previous page
 	{{end}}
 
 	{{if lt .Page .TotalPages}}
 		| <a href="{{.NextURL}}">Next page</a>
+	{{else}}
+		| Next page
 	{{end}}
 
 	{{if gt .TotalPages 1}}
@@ -292,10 +296,14 @@ func makeImagePageHTML(image HTMLImage, dir string, totalImages int,
 
 	{{if .PreviousURL}}
 		| <a href="{{.PreviousURL}}">Previous image</a>
+	{{else}}
+		| Previous image
 	{{end}}
 
 	{{if .NextURL}}
 		| <a href="{{.NextURL}}">Next image</a>
+	{{else}}
+		| Next image
 	{{end}}
 </div>
 
