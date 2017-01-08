@@ -10,7 +10,7 @@ import (
 	"log"
 	"os"
 
-	"summercat.com/gallery"
+	"github.com/horgh/gallery"
 )
 
 // Args holds command line argument information.

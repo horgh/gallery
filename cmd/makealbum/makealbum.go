@@ -16,7 +16,7 @@ import (
 	"os"
 	"strings"
 
-	"summercat.com/gallery"
+	"github.com/horgh/gallery"
 )
 
 // Args holds the command line arguments.
