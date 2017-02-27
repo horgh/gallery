@@ -102,6 +102,13 @@ func (i *Image) makeThumbnail(dir string, verbose, forceGenerate bool) error {
 		return fmt.Errorf("unable to open image: %s: %s", i.Filename, err)
 	}
 
+	err = image.AutoOrient()
+	if err != nil {
+		_ = image.Destroy()
+		return fmt.Errorf("unable to auto orient: %s: %s", i.Filename, err)
+	}
+
+	// Resize.
 	if image.Width() > image.Height() {
 		err := image.Resize(fmt.Sprintf("x%d", i.ThumbnailSize))
 		if err != nil {
@@ -123,7 +130,7 @@ func (i *Image) makeThumbnail(dir string, verbose, forceGenerate bool) error {
 	if image.Width() > image.Height() {
 		diff := image.Width() - image.Height()
 		xOffset = diff / 2
-	} else if image.Height() > image.Height() {
+	} else if image.Height() > image.Width() {
 		diff := image.Height() - image.Width()
 		yOffset = diff / 2
 	}
@@ -138,11 +145,7 @@ func (i *Image) makeThumbnail(dir string, verbose, forceGenerate bool) error {
 		return fmt.Errorf("unable to crop: %s: %s", i.Filename, err)
 	}
 
-	err = image.AutoOrient()
-	if err != nil {
-		_ = image.Destroy()
-		return fmt.Errorf("unable to auto orient: %s: %s", i.Filename, err)
-	}
+	image.PlusRepage()
 
 	err = image.ToFile(resizeFile)
 	if err != nil {
@@ -192,6 +195,12 @@ func (i *Image) makeLargeImage(dir string, verbose, forceGenerate bool) error {
 		return fmt.Errorf("unable to open image: %s: %s", i.Filename, err)
 	}
 
+	err = image.AutoOrient()
+	if err != nil {
+		_ = image.Destroy()
+		return fmt.Errorf("unable to auto orient: %s: %s", i.Filename, err)
+	}
+
 	// May not need to resize.
 	if image.Width() > i.LargeImageSize || image.Height() > i.LargeImageSize {
 		if image.Width() > image.Height() {
@@ -207,12 +216,6 @@ func (i *Image) makeLargeImage(dir string, verbose, forceGenerate bool) error {
 				return fmt.Errorf("unable to resize image: %s: %s", i.Filename, err)
 			}
 		}
-	}
-
-	err = image.AutoOrient()
-	if err != nil {
-		_ = image.Destroy()
-		return fmt.Errorf("unable to auto orient: %s: %s", i.Filename, err)
 	}
 
 	err = image.ToFile(resizeFile)
