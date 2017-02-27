@@ -312,31 +312,23 @@ document.addEventListener('DOMContentLoaded', function() {
 	document.addEventListener('keydown', function(evt) {
 		evt.preventDefault();
 
-		// Left arrow key.
-		if (evt.keyCode === 37) {
-			G.goToPreviousImagePage();
-		}
+		{{if .PreviousURL}}
+			// Left arrow key.
+			if (evt.keyCode === 37) {
+				window.location.href = "{{.PreviousURL}}";
+				return;
+			}
+		{{end}}
 
-		// Right arrow key.
-		if (evt.keyCode === 39) {
-			G.goToNextImagePage();
-		}
+		{{if .NextURL}}
+			// Right arrow key.
+			if (evt.keyCode === 39) {
+				window.location.href = "{{.NextURL}}";
+				return;
+			}
+		{{end}}
 	});
 });
-
-G.goToNextImagePage = function() {
-	if ("{{.NextURL}}" === "") {
-		return;
-	}
-	window.location.href = "{{.NextURL}}";
-};
-
-G.goToPreviousImagePage = function() {
-	if ("{{.PreviousURL}}" === "") {
-		return;
-	}
-	window.location.href = "{{.PreviousURL}}";
-};
 </script>
 <h1>{{.ImageName}}</h1>
 
