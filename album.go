@@ -105,21 +105,32 @@ func (a *Album) Install() error {
 	return nil
 }
 
-// load parses a file listing images and information about them.
+// ParseAlbumFile an album file. This file lists images and information about
+// each of them.
 //
-// Format:
-// filename\n
+// Format of the file:
+// Image filename\n
 // Optional: Description\n
 // Optional: Tag: comma separated tags on the image\n
 // Blank line
 // Then should come the next filename, or end of file.
 //
 // This means each block describes information about one file.
-func (a *Album) load() error {
-	fh, err := os.Open(a.File)
+//
+// We parse into Image structs. We parse only these fields:
+// Filename
+// Description
+// Tags
+//
+// This is to allow this function to be usable for operating on the album file
+// by itself without assuming we are doing anything with it.
+func ParseAlbumFile(file string) ([]*Image, error) {
+	fh, err := os.Open(file)
 	if err != nil {
-		return fmt.Errorf("unable to open: %s: %s", a.File, err)
+		return nil, fmt.Errorf("unable to open: %s: %s", file, err)
 	}
+
+	images := []*Image{}
 
 	scanner := bufio.NewScanner(fh)
 
@@ -151,13 +162,10 @@ func (a *Album) load() error {
 				continue
 			}
 
-			a.images = append(a.images, &Image{
-				Path:           path.Join(a.OrigImageDir, filename),
-				Filename:       filename,
-				Description:    description,
-				Tags:           tags,
-				ThumbnailSize:  a.ThumbnailSize,
-				LargeImageSize: a.LargeImageSize,
+			images = append(images, &Image{
+				Filename:    filename,
+				Description: description,
+				Tags:        tags,
 			})
 
 			filename = ""
@@ -186,25 +194,46 @@ func (a *Album) load() error {
 
 	// May have one last file to store
 	if len(filename) > 0 {
-		a.images = append(a.images, &Image{
-			Path:           path.Join(a.OrigImageDir, filename),
-			Filename:       filename,
-			Description:    description,
-			Tags:           tags,
-			ThumbnailSize:  a.ThumbnailSize,
-			LargeImageSize: a.LargeImageSize,
+		images = append(images, &Image{
+			Filename:    filename,
+			Description: description,
+			Tags:        tags,
 		})
 	}
 
 	if scanner.Err() != nil {
 		_ = fh.Close()
-		return fmt.Errorf("scan failure: %s", scanner.Err())
+		return nil, fmt.Errorf("scan failure: %s", scanner.Err())
 	}
 
 	err = fh.Close()
 	if err != nil {
-		return fmt.Errorf("close: %s", err)
+		return nil, fmt.Errorf("close: %s", err)
 	}
+
+	return images, nil
+}
+
+// load parses an album file to find all of the images, and then fills in
+// information about each found Image.
+//
+// This includes setting each Image's:
+// Path
+// ThumbnailSize
+// LargeImageSize
+func (a *Album) load() error {
+	images, err := ParseAlbumFile(a.File)
+	if err != nil {
+		return err
+	}
+
+	for _, image := range images {
+		image.Path = path.Join(a.OrigImageDir, image.Filename)
+		image.ThumbnailSize = a.ThumbnailSize
+		image.LargeImageSize = a.LargeImageSize
+	}
+
+	a.images = images
 
 	return nil
 }
