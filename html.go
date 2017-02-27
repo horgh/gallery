@@ -77,7 +77,6 @@ body {
 // gallery. This is a single page that links to all albums.
 func makeGalleryHTML(installDir, name string, albums []HTMLAlbum,
 	verbose, forceGenerate bool) error {
-
 	htmlPath := path.Join(installDir, "index.html")
 	exists, err := fileExists(htmlPath)
 	if err != nil {
@@ -146,10 +145,13 @@ func makeGalleryHTML(installDir, name string, albums []HTMLAlbum,
 }
 
 // generate and write an HTML page for an album.
+//
+// This is the top level page of an album and shows potentially multiple images.
+//
+// galleryName is optional. It may be we are creating a standalone album.
 func makeAlbumPageHTML(totalPages, totalImages, page int,
 	images []HTMLImage, installDir, name, galleryName string,
 	verbose, forceGenerate bool) error {
-
 	// Figure out filename to write.
 	// Page 1 is index.html. The rest are page-n.html
 	filename := "index.html"
@@ -169,25 +171,31 @@ func makeAlbumPageHTML(totalPages, totalImages, page int,
 
 	const tpl = `<!DOCTYPE html>
 <meta charset="utf-8">
+{{if .GalleryName}}
 <title>{{.Name}} - {{.GalleryName}}</title>
+{{else}}
+<title>{{.Name}}</title>
+{{end}}
 <meta name="viewport" content="width=device-width, user-scalable=no">
 <style>` + css + `</style>
 <h1>{{.Name}} ({{.TotalImages}} images)</h1>
 
 <div id="nav">
 	Navigation:
-	<a href="..">Back to {{.GalleryName}}</a>
+	{{if .GalleryName}}
+		<a href="..">Back to {{.GalleryName}}</a> |
+	{{end}}
 
 	{{if gt .Page 1}}
-		| <a href="{{.PreviousURL}}">Previous page</a>
+		<a href="{{.PreviousURL}}">Previous page</a> |
 	{{else}}
-		| Previous page
+		Previous page |
 	{{end}}
 
 	{{if lt .Page .TotalPages}}
-		| <a href="{{.NextURL}}">Next page</a>
+		<a href="{{.NextURL}}">Next page</a>
 	{{else}}
-		| Next page
+		Next page
 	{{end}}
 
 	{{if gt .TotalPages 1}}
@@ -269,11 +277,13 @@ func makeAlbumPageHTML(totalPages, totalImages, page int,
 	return nil
 }
 
-// Make an HTML page showing a single image. We show the larger size of the
-// image. We link to the original image.
+// Make an HTML page showing a single image.
+//
+// This page shows the larger size of the image. We link to the original image.
+//
+// galleryName is optional. It may be we are creating a standalone album.
 func makeImagePageHTML(image HTMLImage, dir string, totalImages int,
 	albumName, galleryName string, verbose, forceGenerate bool) error {
-
 	htmlPath := path.Join(dir, fmt.Sprintf("image-%d.html", image.Index))
 	exists, err := fileExists(htmlPath)
 	if err != nil {
@@ -286,7 +296,11 @@ func makeImagePageHTML(image HTMLImage, dir string, totalImages int,
 
 	const tpl = `<!DOCTYPE html>
 <meta charset="utf-8">
+{{if .GalleryName}}
 <title>{{.ImageName}} - {{.AlbumName}} - {{.GalleryName}}</title>
+{{else}}
+<title>{{.ImageName}} - {{.AlbumName}}</title>
+{{end}}
 <meta name="viewport" content="width=device-width, user-scalable=no">
 <style>` + css + `</style>
 <script>
@@ -328,7 +342,9 @@ G.goToPreviousImagePage = function() {
 
 <div id="nav">
 	Navigation:
+	{{if .GalleryName}}
 	<a href="..">Back to {{.GalleryName}}</a> |
+	{{end}}
 	<a href="index.html">Back to {{.AlbumName}}</a>
 
 	{{if .PreviousURL}}

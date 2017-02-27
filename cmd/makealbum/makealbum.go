@@ -1,12 +1,11 @@
+// This program creates a static image album website.
 //
-// This program creates a static photo album website.
+// It differs from makegallery in that it creates a website for a single album
+// of images, whereas makegallery assumes you have multiple albums.
 //
 // You provide it a list of filenames and metadata about each, and where the
 // files are located. It generates HTML for a static site, and resizes the
 // images to create thumbnails as needed.
-//
-// This program creates a website with a single photo album.
-//
 package main
 
 import (
@@ -32,28 +31,30 @@ type Args struct {
 	// ImageDir is where the raw images are found.
 	ImageDir string
 
-	// ResizedImageDir is where we place resized images from imageDir.
-	// You probably will want to keep that around persistently rather than
-	// resizing repeatedly.
-	ResizedImageDir string
-
 	// InstallDir is where the selected images and HTML ends up. You probably
 	// want to wipe this out each run.
 	InstallDir string
-
-	// ThumbSize is the percentage size a thumbnail is of the original.
-	// We will resize the original to this percentage.
-	ThumbSize int
-
-	// FullSize is the percentage size a full image is of the original.
-	// We will resize the original to this percentage.
-	FullSize int
 
 	// Verbose controls whether to log more verbose output.
 	Verbose bool
 
 	// Title we use for the <title> and header of the page.
 	Title string
+
+	// How many images to show per page (thumbnails).
+	PageSize int
+
+	// Force generation of images (e.g. thumbs) even if they exist.
+	ForceGenerateImages bool
+
+	// Force generation of HTML even if it exists.
+	ForceGenerateHTML bool
+
+	// Force generation of Zips even if they exist.
+	ForceGenerateZip bool
+
+	// Number of workers to use when resizing images.
+	Workers int
 }
 
 func main() {
@@ -68,15 +69,19 @@ func main() {
 	}
 
 	album := gallery.Album{
-		Name:         args.Title,
-		File:         args.AlbumFile,
-		OrigImageDir: args.ImageDir,
-		ResizedDir:   args.ResizedImageDir,
-		InstallDir:   args.InstallDir,
-		Tags:         args.Tags,
-		ThumbSize:    args.ThumbSize,
-		FullSize:     args.FullSize,
-		PageSize:     20,
+		Name:                args.Title,
+		File:                args.AlbumFile,
+		OrigImageDir:        args.ImageDir,
+		InstallDir:          args.InstallDir,
+		ThumbnailSize:       gallery.ThumbnailSize,
+		LargeImageSize:      gallery.LargeImageSize,
+		PageSize:            args.PageSize,
+		Workers:             args.Workers,
+		Verbose:             args.Verbose,
+		ForceGenerateImages: args.ForceGenerateImages,
+		ForceGenerateHTML:   args.ForceGenerateHTML,
+		ForceGenerateZip:    args.ForceGenerateZip,
+		Tags:                args.Tags,
 	}
 
 	err = album.Install()
@@ -90,12 +95,14 @@ func getArgs() (Args, error) {
 	albumFile := flag.String("album-file", "", "Path to the file describing and listing the images in an album.")
 	tagString := flag.String("tags", "", "Include images with these tag(s) only. Separate by commas. Optional.")
 	imageDir := flag.String("image-dir", "", "Path to the directory with all images.")
-	resizedImageDir := flag.String("resized-dir", "", "Path to the directory to hold resized images. We resize on demand.")
 	installDir := flag.String("install-dir", "", "Path to the directory to install to.")
-	thumbSize := flag.Int("thumb-size", 4, "Resize images to this percent of the original to create thumbnails.")
-	fullSize := flag.Int("full-size", 20, "Resize images to this percent of the original to create the 'full' image (linked to by the thumbnail).")
-	verbose := flag.Bool("verbose", false, "Toggle more verbose output.")
-	title := flag.String("title", "Gallery", "Title of the gallery. We use this for the title element and page header.")
+	verbose := flag.Bool("verbose", false, "Toggle verbose logging.")
+	title := flag.String("title", "Album", "Title of the album. We use this for the title element and page header.")
+	pageSize := flag.Int("page-size", 50, "Number of image thumbnails per page in albums.")
+	forceGenerateImages := flag.Bool("generate-images", false, "Force regenerating resized images. Normally we only do so if they don't exist.")
+	forceGenerateHTML := flag.Bool("generate-html", false, "Force regenerating HTML. Normally we only do so if it does not exist.")
+	forceGenerateZip := flag.Bool("generate-zip", false, "Force regenerating zip files. Normally we only do so if they do not exist.")
+	workers := flag.Int("workers", 4, "Number of workers for image resizing.")
 
 	flag.Parse()
 
@@ -118,25 +125,10 @@ func getArgs() (Args, error) {
 	}
 	args.ImageDir = *imageDir
 
-	if len(*resizedImageDir) == 0 {
-		return Args{}, fmt.Errorf("you must provide a resized image directory")
-	}
-	args.ResizedImageDir = *resizedImageDir
-
 	if len(*installDir) == 0 {
 		return Args{}, fmt.Errorf("you must provide an install directory")
 	}
 	args.InstallDir = *installDir
-
-	if *thumbSize <= 0 || *thumbSize >= 100 {
-		return Args{}, fmt.Errorf("thumbnail size must be (0, 100)")
-	}
-	args.ThumbSize = *thumbSize
-
-	if *fullSize <= 0 || *fullSize >= 100 {
-		return Args{}, fmt.Errorf("full image size must be (0, 100)")
-	}
-	args.FullSize = *fullSize
 
 	args.Verbose = *verbose
 
@@ -144,6 +136,12 @@ func getArgs() (Args, error) {
 		return Args{}, fmt.Errorf("please provide a title")
 	}
 	args.Title = *title
+
+	args.PageSize = *pageSize
+	args.ForceGenerateImages = *forceGenerateImages
+	args.ForceGenerateHTML = *forceGenerateHTML
+	args.ForceGenerateZip = *forceGenerateZip
+	args.Workers = *workers
 
 	return args, nil
 }

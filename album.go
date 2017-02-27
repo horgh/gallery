@@ -27,7 +27,9 @@ type Album struct {
 	// Dir to install HTML/images.
 	InstallDir string
 
-	// Subdirectory we will be in in the installation dir.
+	// Subdirectory we will be in in the installation directory. We use this when
+	// creating the link/image when creating the gallery index page. If you are
+	// not building a gallery with multiple albums, then we don't use this field.
 	InstallSubDir string
 
 	// Image thumbnail size. Width. Pixels.
@@ -56,6 +58,11 @@ type Album struct {
 	ForceGenerateZip bool
 
 	// Gallery's name. Human readable.
+	//
+	// The gallery is the name given to the site holding potentially multiple
+	// albums of images. We use it inside the album when linking back to the top
+	// level of the gallery. If you are creating only a single album, then we do
+	// not use this field.
 	GalleryName string
 
 	// Tags tells us to include images that has one of these tags. If there are

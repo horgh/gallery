@@ -8,12 +8,14 @@ import (
 	"strings"
 )
 
-// Thumbnails are this size in pixels. Width and height are the same.
-const thumbnailSize = 100
+// ThumbnailSize defines the thumbnail size in pixels. Width and height are the
+// same.
+const ThumbnailSize = 100
 
-// Larger version of images (but smaller than original) have this size in pixels
-// as their longest side.
-const largeImageSize = 595
+// LargeImageSize defines the size of the larger version of images (if the
+// original image is larger than this) in pixels. This is the pixel size set of
+// their longest side.
+const LargeImageSize = 595
 
 // Gallery holds information about a full gallery site which contains 1 or
 // more albums of images.
@@ -213,8 +215,8 @@ func (g *Gallery) loadAlbum(name, dir, subDir, file, tags string) error {
 		OrigImageDir:        dir,
 		InstallDir:          path.Join(g.InstallDir, subDir),
 		InstallSubDir:       subDir,
-		ThumbnailSize:       thumbnailSize,
-		LargeImageSize:      largeImageSize,
+		ThumbnailSize:       ThumbnailSize,
+		LargeImageSize:      LargeImageSize,
 		PageSize:            g.PageSize,
 		Workers:             g.Workers,
 		Verbose:             g.Verbose,
