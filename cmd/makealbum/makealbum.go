@@ -102,7 +102,7 @@ func getArgs() (Args, error) {
 	args := Args{}
 
 	if len(*albumFile) == 0 {
-		return Args{}, fmt.Errorf("You must provide an album file.")
+		return Args{}, fmt.Errorf("you must provide an album file")
 	}
 	args.AlbumFile = *albumFile
 
@@ -114,34 +114,34 @@ func getArgs() (Args, error) {
 	}
 
 	if len(*imageDir) == 0 {
-		return Args{}, fmt.Errorf("You must provide an image directory.")
+		return Args{}, fmt.Errorf("you must provide an image directory")
 	}
 	args.ImageDir = *imageDir
 
 	if len(*resizedImageDir) == 0 {
-		return Args{}, fmt.Errorf("You must provide a resized image directory.")
+		return Args{}, fmt.Errorf("you must provide a resized image directory")
 	}
 	args.ResizedImageDir = *resizedImageDir
 
 	if len(*installDir) == 0 {
-		return Args{}, fmt.Errorf("You must provide an install directory.")
+		return Args{}, fmt.Errorf("you must provide an install directory")
 	}
 	args.InstallDir = *installDir
 
 	if *thumbSize <= 0 || *thumbSize >= 100 {
-		return Args{}, fmt.Errorf("Thumbnail size must be (0, 100).")
+		return Args{}, fmt.Errorf("thumbnail size must be (0, 100)")
 	}
 	args.ThumbSize = *thumbSize
 
 	if *fullSize <= 0 || *fullSize >= 100 {
-		return Args{}, fmt.Errorf("Full image size must be (0, 100).")
+		return Args{}, fmt.Errorf("full image size must be (0, 100)")
 	}
 	args.FullSize = *fullSize
 
 	args.Verbose = *verbose
 
 	if len(*title) == 0 {
-		return Args{}, fmt.Errorf("Please provide a title.")
+		return Args{}, fmt.Errorf("please provide a title")
 	}
 	args.Title = *title
 

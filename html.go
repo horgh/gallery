@@ -81,7 +81,7 @@ func makeGalleryHTML(installDir, name string, albums []HTMLAlbum,
 	htmlPath := path.Join(installDir, "index.html")
 	exists, err := fileExists(htmlPath)
 	if err != nil {
-		return fmt.Errorf("Failed to check if HTML exists: %s: %s", htmlPath, err)
+		return fmt.Errorf("failed to check if HTML exists: %s: %s", htmlPath, err)
 	}
 
 	if !forceGenerate && exists {
@@ -112,12 +112,12 @@ func makeGalleryHTML(installDir, name string, albums []HTMLAlbum,
 
 	t, err := template.New("page").Parse(tpl)
 	if err != nil {
-		return fmt.Errorf("Unable to parse HTML template: %s", err)
+		return fmt.Errorf("unable to parse HTML template: %s", err)
 	}
 
 	fh, err := os.Create(htmlPath)
 	if err != nil {
-		return fmt.Errorf("Unable to open HTML file: %s", err)
+		return fmt.Errorf("unable to open HTML file: %s", err)
 	}
 
 	data := struct {
@@ -131,12 +131,12 @@ func makeGalleryHTML(installDir, name string, albums []HTMLAlbum,
 	err = t.Execute(fh, data)
 	if err != nil {
 		_ = fh.Close()
-		return fmt.Errorf("Unable to execute template: %s", err)
+		return fmt.Errorf("unable to execute template: %s", err)
 	}
 
 	err = fh.Close()
 	if err != nil {
-		return fmt.Errorf("Close: %s", err)
+		return fmt.Errorf("close: %s", err)
 	}
 
 	if verbose {
@@ -160,7 +160,7 @@ func makeAlbumPageHTML(totalPages, totalImages, page int,
 	htmlPath := path.Join(installDir, filename)
 	exists, err := fileExists(htmlPath)
 	if err != nil {
-		return fmt.Errorf("Failed to check if HTML exists: %s: %s", htmlPath, err)
+		return fmt.Errorf("failed to check if HTML exists: %s: %s", htmlPath, err)
 	}
 
 	if !forceGenerate && exists {
@@ -210,12 +210,12 @@ func makeAlbumPageHTML(totalPages, totalImages, page int,
 
 	t, err := template.New("page").Parse(tpl)
 	if err != nil {
-		return fmt.Errorf("Unable to parse HTML template: %s", err)
+		return fmt.Errorf("unable to parse HTML template: %s", err)
 	}
 
 	fh, err := os.Create(htmlPath)
 	if err != nil {
-		return fmt.Errorf("Unable to open HTML file: %s", err)
+		return fmt.Errorf("unable to open HTML file: %s", err)
 	}
 
 	previousURL := ""
@@ -255,12 +255,12 @@ func makeAlbumPageHTML(totalPages, totalImages, page int,
 	err = t.Execute(fh, data)
 	if err != nil {
 		_ = fh.Close()
-		return fmt.Errorf("Unable to execute template: %s", err)
+		return fmt.Errorf("unable to execute template: %s", err)
 	}
 
 	err = fh.Close()
 	if err != nil {
-		return fmt.Errorf("Close: %s", err)
+		return fmt.Errorf("close: %s", err)
 	}
 
 	if verbose {
@@ -277,7 +277,7 @@ func makeImagePageHTML(image HTMLImage, dir string, totalImages int,
 	htmlPath := path.Join(dir, fmt.Sprintf("image-%d.html", image.Index))
 	exists, err := fileExists(htmlPath)
 	if err != nil {
-		return fmt.Errorf("Failed to check if HTML exists: %s: %s", htmlPath, err)
+		return fmt.Errorf("failed to check if HTML exists: %s: %s", htmlPath, err)
 	}
 
 	if !forceGenerate && exists {
@@ -357,12 +357,12 @@ G.goToPreviousImagePage = function() {
 
 	t, err := template.New("page").Parse(tpl)
 	if err != nil {
-		return fmt.Errorf("Unable to parse HTML template: %s", err)
+		return fmt.Errorf("unable to parse HTML template: %s", err)
 	}
 
 	fh, err := os.Create(htmlPath)
 	if err != nil {
-		return fmt.Errorf("Unable to open HTML file: %s", err)
+		return fmt.Errorf("unable to open HTML file: %s", err)
 	}
 
 	nextURL := ""
@@ -398,12 +398,12 @@ G.goToPreviousImagePage = function() {
 	err = t.Execute(fh, data)
 	if err != nil {
 		_ = fh.Close()
-		return fmt.Errorf("Unable to execute template: %s", err)
+		return fmt.Errorf("unable to execute template: %s", err)
 	}
 
 	err = fh.Close()
 	if err != nil {
-		return fmt.Errorf("Close: %s", err)
+		return fmt.Errorf("close: %s", err)
 	}
 
 	if verbose {

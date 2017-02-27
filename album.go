@@ -74,38 +74,38 @@ type Album struct {
 func (a *Album) Install() error {
 	err := a.load()
 	if err != nil {
-		return fmt.Errorf("Unable to parse metadata file: %s", err)
+		return fmt.Errorf("unable to parse metadata file: %s", err)
 	}
 
 	err = a.ChooseImages()
 	if err != nil {
-		return fmt.Errorf("Unable to choose images: %s", err)
+		return fmt.Errorf("unable to choose images: %s", err)
 	}
 
 	err = a.GenerateImages()
 	if err != nil {
-		return fmt.Errorf("Problem generating images: %s", err)
+		return fmt.Errorf("problem generating images: %s", err)
 	}
 
 	err = a.GenerateHTML()
 	if err != nil {
-		return fmt.Errorf("Problem generating HTML: %s", err)
+		return fmt.Errorf("problem generating HTML: %s", err)
 	}
 
 	err = a.InstallImages()
 	if err != nil {
-		return fmt.Errorf("Unable to install images: %s", err)
+		return fmt.Errorf("unable to install images: %s", err)
 	}
 
 	err = a.makeZip()
 	if err != nil {
-		return fmt.Errorf("Unable to create zip file: %s", err)
+		return fmt.Errorf("unable to create zip file: %s", err)
 	}
 
 	return nil
 }
 
-// LoadAlbumFile parses a file listing images and information about them.
+// load parses a file listing images and information about them.
 //
 // Format:
 // filename\n
@@ -118,7 +118,7 @@ func (a *Album) Install() error {
 func (a *Album) load() error {
 	fh, err := os.Open(a.File)
 	if err != nil {
-		return fmt.Errorf("Unable to open: %s: %s", a.File, err)
+		return fmt.Errorf("unable to open: %s: %s", a.File, err)
 	}
 
 	scanner := bufio.NewScanner(fh)
@@ -198,12 +198,12 @@ func (a *Album) load() error {
 
 	if scanner.Err() != nil {
 		_ = fh.Close()
-		return fmt.Errorf("Scan failure: %s", scanner.Err())
+		return fmt.Errorf("scan failure: %s", scanner.Err())
 	}
 
 	err = fh.Close()
 	if err != nil {
-		return fmt.Errorf("Close: %s", err)
+		return fmt.Errorf("close: %s", err)
 	}
 
 	return nil
@@ -294,7 +294,7 @@ func (a *Album) InstallImages() error {
 
 		err = copyFile(image.Path, origTarget)
 		if err != nil {
-			return fmt.Errorf("Unable to copy %s to %s: %s", image.Path, origTarget,
+			return fmt.Errorf("unable to copy %s to %s: %s", image.Path, origTarget,
 				err)
 		}
 	}
@@ -413,7 +413,7 @@ func (a *Album) GenerateHTML() error {
 				htmlImages, a.InstallDir, a.Name, a.GalleryName, a.Verbose,
 				a.ForceGenerateHTML)
 			if err != nil {
-				return fmt.Errorf("Unable to generate album page HTML: %s", err)
+				return fmt.Errorf("unable to generate album page HTML: %s", err)
 			}
 
 			htmlImages = nil
@@ -423,7 +423,7 @@ func (a *Album) GenerateHTML() error {
 		err := makeImagePageHTML(htmlImage, a.InstallDir, len(a.chosenImages),
 			a.Name, a.GalleryName, a.Verbose, a.ForceGenerateHTML)
 		if err != nil {
-			return fmt.Errorf("Unable to generate image page HTML: %s", err)
+			return fmt.Errorf("unable to generate image page HTML: %s", err)
 		}
 	}
 
@@ -431,7 +431,7 @@ func (a *Album) GenerateHTML() error {
 		err := makeAlbumPageHTML(totalPages, len(a.chosenImages), page, htmlImages,
 			a.InstallDir, a.Name, a.GalleryName, a.Verbose, a.ForceGenerateHTML)
 		if err != nil {
-			return fmt.Errorf("Unable to generate/write HTML: %s", err)
+			return fmt.Errorf("unable to generate/write HTML: %s", err)
 		}
 	}
 

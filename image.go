@@ -89,7 +89,7 @@ func (i *Image) makeThumbnail(dir string, verbose, forceGenerate bool) error {
 		}
 
 		if !os.IsNotExist(err) {
-			return fmt.Errorf("Stat: %s %s", resizeFile, err)
+			return fmt.Errorf("stat: %s %s", resizeFile, err)
 		}
 	}
 
@@ -99,20 +99,20 @@ func (i *Image) makeThumbnail(dir string, verbose, forceGenerate bool) error {
 
 	image, err := magick.NewFromFile(i.Path)
 	if err != nil {
-		return fmt.Errorf("Unable to open image: %s: %s", i.Filename, err)
+		return fmt.Errorf("unable to open image: %s: %s", i.Filename, err)
 	}
 
 	if image.Width() > image.Height() {
 		err := image.Resize(fmt.Sprintf("x%d", i.ThumbnailSize))
 		if err != nil {
 			_ = image.Destroy()
-			return fmt.Errorf("Unable to resize image: %s: %s", i.Filename, err)
+			return fmt.Errorf("unable to resize image: %s: %s", i.Filename, err)
 		}
 	} else {
 		err := image.Resize(fmt.Sprintf("%dx", i.ThumbnailSize))
 		if err != nil {
 			_ = image.Destroy()
-			return fmt.Errorf("Unable to resize image: %s: %s", i.Filename, err)
+			return fmt.Errorf("unable to resize image: %s: %s", i.Filename, err)
 		}
 	}
 
@@ -135,24 +135,24 @@ func (i *Image) makeThumbnail(dir string, verbose, forceGenerate bool) error {
 	err = image.Crop(geometry)
 	if err != nil {
 		_ = image.Destroy()
-		return fmt.Errorf("Unable to crop: %s: %s", i.Filename, err)
+		return fmt.Errorf("unable to crop: %s: %s", i.Filename, err)
 	}
 
 	err = image.AutoOrient()
 	if err != nil {
 		_ = image.Destroy()
-		return fmt.Errorf("Unable to auto orient: %s: %s", i.Filename, err)
+		return fmt.Errorf("unable to auto orient: %s: %s", i.Filename, err)
 	}
 
 	err = image.ToFile(resizeFile)
 	if err != nil {
 		_ = image.Destroy()
-		return fmt.Errorf("Unable to save resized image: %s: %s", resizeFile, err)
+		return fmt.Errorf("unable to save resized image: %s: %s", resizeFile, err)
 	}
 
 	err = image.Destroy()
 	if err != nil {
-		return fmt.Errorf("Unable to clean up: %s", err)
+		return fmt.Errorf("unable to clean up: %s", err)
 	}
 
 	i.ThumbnailPath = resizeFile
@@ -179,7 +179,7 @@ func (i *Image) makeLargeImage(dir string, verbose, forceGenerate bool) error {
 		}
 
 		if !os.IsNotExist(err) {
-			return fmt.Errorf("Stat: %s %s", resizeFile, err)
+			return fmt.Errorf("stat: %s %s", resizeFile, err)
 		}
 	}
 
@@ -189,7 +189,7 @@ func (i *Image) makeLargeImage(dir string, verbose, forceGenerate bool) error {
 
 	image, err := magick.NewFromFile(i.Path)
 	if err != nil {
-		return fmt.Errorf("Unable to open image: %s: %s", i.Filename, err)
+		return fmt.Errorf("unable to open image: %s: %s", i.Filename, err)
 	}
 
 	// May not need to resize.
@@ -198,13 +198,13 @@ func (i *Image) makeLargeImage(dir string, verbose, forceGenerate bool) error {
 			err := image.Resize(fmt.Sprintf("%dx", i.LargeImageSize))
 			if err != nil {
 				_ = image.Destroy()
-				return fmt.Errorf("Unable to resize image: %s: %s", i.Filename, err)
+				return fmt.Errorf("unable to resize image: %s: %s", i.Filename, err)
 			}
 		} else {
 			err := image.Resize(fmt.Sprintf("x%d", i.LargeImageSize))
 			if err != nil {
 				_ = image.Destroy()
-				return fmt.Errorf("Unable to resize image: %s: %s", i.Filename, err)
+				return fmt.Errorf("unable to resize image: %s: %s", i.Filename, err)
 			}
 		}
 	}
@@ -212,18 +212,18 @@ func (i *Image) makeLargeImage(dir string, verbose, forceGenerate bool) error {
 	err = image.AutoOrient()
 	if err != nil {
 		_ = image.Destroy()
-		return fmt.Errorf("Unable to auto orient: %s: %s", i.Filename, err)
+		return fmt.Errorf("unable to auto orient: %s: %s", i.Filename, err)
 	}
 
 	err = image.ToFile(resizeFile)
 	if err != nil {
 		_ = image.Destroy()
-		return fmt.Errorf("Unable to save resized image: %s: %s", resizeFile, err)
+		return fmt.Errorf("unable to save resized image: %s: %s", resizeFile, err)
 	}
 
 	err = image.Destroy()
 	if err != nil {
-		return fmt.Errorf("Unable to clean up: %s", err)
+		return fmt.Errorf("unable to clean up: %s", err)
 	}
 
 	i.LargeImagePath = resizeFile
@@ -239,7 +239,7 @@ func (i Image) getResizedFilename(dir string, width,
 	namePieces := strings.Split(i.Filename, ".")
 
 	if len(namePieces) != 2 {
-		return "", fmt.Errorf("Unexpected filename format")
+		return "", fmt.Errorf("unexpected filename format")
 	}
 
 	// -1 if the width/height is auto. Width/height will be width depending on

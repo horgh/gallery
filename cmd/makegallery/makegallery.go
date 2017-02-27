@@ -86,15 +86,15 @@ func getArgs() (*Args, error) {
 	flag.Parse()
 
 	if len(*galleryFile) == 0 {
-		return nil, fmt.Errorf("You must provide a gallery file.")
+		return nil, fmt.Errorf("you must provide a gallery file")
 	}
 
 	if len(*installDir) == 0 {
-		return nil, fmt.Errorf("You must provide an install directory.")
+		return nil, fmt.Errorf("you must provide an install directory")
 	}
 
 	if len(*title) == 0 {
-		return nil, fmt.Errorf("You must provide a title.")
+		return nil, fmt.Errorf("you must provide a title")
 	}
 
 	return &Args{

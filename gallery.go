@@ -54,7 +54,7 @@ type Gallery struct {
 func (g *Gallery) Install() error {
 	err := g.load(g.File)
 	if err != nil {
-		return fmt.Errorf("Unable to load gallery file: %s", err)
+		return fmt.Errorf("unable to load gallery file: %s", err)
 	}
 
 	err = makeDirIfNotExist(g.InstallDir)
@@ -67,7 +67,7 @@ func (g *Gallery) Install() error {
 	for _, album := range g.albums {
 		err := album.Install()
 		if err != nil {
-			return fmt.Errorf("Unable to install album: %s: %s", album.Name,
+			return fmt.Errorf("unable to install album: %s: %s", album.Name,
 				err)
 		}
 
@@ -82,7 +82,7 @@ func (g *Gallery) Install() error {
 	err = makeGalleryHTML(g.InstallDir, g.Name, htmlAlbums, g.Verbose,
 		g.ForceGenerateHTML)
 	if err != nil {
-		return fmt.Errorf("Unable to make gallery HTML: %s", err)
+		return fmt.Errorf("unable to make gallery HTML: %s", err)
 	}
 
 	return nil
@@ -128,7 +128,7 @@ func (g *Gallery) load(file string) error {
 		pieces := strings.SplitN(text, "=", 2)
 		if len(pieces) != 2 {
 			_ = fh.Close()
-			return fmt.Errorf("Malformed line: %s", text)
+			return fmt.Errorf("malformed line: %s", text)
 		}
 
 		pieces[0] = strings.TrimSpace(pieces[0])
@@ -169,7 +169,7 @@ func (g *Gallery) load(file string) error {
 		}
 
 		_ = fh.Close()
-		return fmt.Errorf("Unexpected line in file: %s", text)
+		return fmt.Errorf("unexpected line in file: %s", text)
 	}
 
 	err = g.loadAlbum(albumName, albumDir, albumSubDir, albumFile, albumTags)
@@ -179,12 +179,12 @@ func (g *Gallery) load(file string) error {
 	}
 
 	if scanner.Err() != nil {
-		return fmt.Errorf("Scanner: %s", err)
+		return fmt.Errorf("scanner: %s", err)
 	}
 
 	err = fh.Close()
 	if err != nil {
-		return fmt.Errorf("Close: %s", err)
+		return fmt.Errorf("close: %s", err)
 	}
 
 	return nil
@@ -192,19 +192,19 @@ func (g *Gallery) load(file string) error {
 
 func (g *Gallery) loadAlbum(name, dir, subDir, file, tags string) error {
 	if len(name) == 0 {
-		return fmt.Errorf("Blank name")
+		return fmt.Errorf("blank name")
 	}
 
 	if len(dir) == 0 {
-		return fmt.Errorf("No dir provided")
+		return fmt.Errorf("no directory provided")
 	}
 
 	if len(subDir) == 0 {
-		return fmt.Errorf("No subdir provided")
+		return fmt.Errorf("no subdirectory provided")
 	}
 
 	if len(file) == 0 {
-		return fmt.Errorf("No file provided")
+		return fmt.Errorf("no file provided")
 	}
 
 	album := &Album{

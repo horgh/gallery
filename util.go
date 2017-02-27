@@ -14,30 +14,30 @@ func copyFile(src string, dest string) error {
 
 	srcFD, err := os.Open(src)
 	if err != nil {
-		return fmt.Errorf("Unable to open file (read): %s", err)
+		return fmt.Errorf("unable to open file (read): %s", err)
 	}
 
 	destFD, err := os.Create(dest)
 	if err != nil {
 		_ = srcFD.Close()
-		return fmt.Errorf("Unable to open file (write): %s", err)
+		return fmt.Errorf("unable to open file (write): %s", err)
 	}
 
 	_, err = io.Copy(destFD, srcFD)
 	if err != nil {
 		_ = srcFD.Close()
 		_ = destFD.Close()
-		return fmt.Errorf("Unable to copy file: %s", err)
+		return fmt.Errorf("unable to copy file: %s", err)
 	}
 
 	err = srcFD.Close()
 	if err != nil {
-		return fmt.Errorf("Close: %s: %s", src, err)
+		return fmt.Errorf("close: %s: %s", src, err)
 	}
 
 	err = destFD.Close()
 	if err != nil {
-		return fmt.Errorf("Close: %s: %s", dest, err)
+		return fmt.Errorf("close: %s: %s", dest, err)
 	}
 
 	return nil
@@ -52,14 +52,14 @@ func makeDirIfNotExist(dir string) error {
 
 		err := os.Mkdir(dir, 0755)
 		if err != nil {
-			return fmt.Errorf("Mkdir: %s: %s", dir, err)
+			return fmt.Errorf("mkdir: %s: %s", dir, err)
 		}
 
 		return nil
 	}
 
 	if !fi.IsDir() {
-		return fmt.Errorf("File exists but is not a dir: %s", dir)
+		return fmt.Errorf("file exists but is not a directory: %s", dir)
 	}
 
 	return nil
