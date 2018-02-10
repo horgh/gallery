@@ -334,9 +334,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
 <div id="nav">
 	Navigation:
-	{{if .GalleryName}}
-	<a href="..">Back to {{.GalleryName}}</a> |
-	{{end}}
 	<a href="index.html">Back to {{.AlbumName}}</a>
 
 	{{if .PreviousURL}}
