@@ -32,6 +32,9 @@ type Gallery struct {
 	// Whether to log verbosely.
 	Verbose bool
 
+	// Whether to generate/link zips of images.
+	IncludeZips bool
+
 	// Force generation of images (e.g. thumbs) even if they exist.
 	ForceGenerateImages bool
 
@@ -220,6 +223,7 @@ func (g *Gallery) loadAlbum(name, dir, subDir, file, tags string) error {
 		PageSize:            g.PageSize,
 		Workers:             g.Workers,
 		Verbose:             g.Verbose,
+		IncludeZip:          g.IncludeZips,
 		ForceGenerateImages: g.ForceGenerateImages,
 		ForceGenerateHTML:   g.ForceGenerateHTML,
 		ForceGenerateZip:    g.ForceGenerateZip,

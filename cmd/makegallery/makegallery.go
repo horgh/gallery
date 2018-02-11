@@ -27,6 +27,9 @@ type Args struct {
 	// Whether to log verbosely.
 	Verbose bool
 
+	// Whether to generate/link zips of images.
+	IncludeZips bool
+
 	// Force generation of images (e.g. thumbs) even if they exist.
 	ForceGenerateImages bool
 
@@ -59,6 +62,7 @@ func main() {
 		InstallDir:          args.InstallDir,
 		Name:                args.Name,
 		Verbose:             args.Verbose,
+		IncludeZips:         args.IncludeZips,
 		ForceGenerateImages: args.ForceGenerateImages,
 		ForceGenerateHTML:   args.ForceGenerateHTML,
 		ForceGenerateZip:    args.ForceGenerateZip,
@@ -77,6 +81,7 @@ func getArgs() (*Args, error) {
 	installDir := flag.String("install-dir", "", "Path to a directory to output HTML/images.")
 	title := flag.String("title", "Gallery", "Name/title of the gallery.")
 	verbose := flag.Bool("verbose", false, "Toggle verbose logging.")
+	includeZips := flag.Bool("include-zips", false, "Generate and link zip files containing images.")
 	pageSize := flag.Int("page-size", 50, "Number of image thumbnails per page in albums.")
 	forceGenerateImages := flag.Bool("generate-images", false, "Force regenerating resized images. Normally we only do so if they don't exist.")
 	forceGenerateHTML := flag.Bool("generate-html", false, "Force regenerating HTML. Normally we only do so if it does not exist.")
@@ -102,6 +107,7 @@ func getArgs() (*Args, error) {
 		InstallDir:          *installDir,
 		Name:                *title,
 		Verbose:             *verbose,
+		IncludeZips:         *includeZips,
 		PageSize:            *pageSize,
 		ForceGenerateImages: *forceGenerateImages,
 		ForceGenerateHTML:   *forceGenerateHTML,

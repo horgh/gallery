@@ -151,7 +151,7 @@ func makeGalleryHTML(installDir, name string, albums []HTMLAlbum,
 // galleryName is optional. It may be we are creating a standalone album.
 func makeAlbumPageHTML(totalPages, totalImages, page int,
 	images []HTMLImage, installDir, name, galleryName string,
-	verbose, forceGenerate bool) error {
+	verbose, forceGenerate, includeZip bool) error {
 	// Figure out filename to write.
 	// Page 1 is index.html. The rest are page-n.html
 	filename := "index.html"
@@ -213,7 +213,9 @@ func makeAlbumPageHTML(totalPages, totalImages, page int,
 	{{end}}
 </div>
 
+{{if .IncludeZip}}
 <a href="{{.Name}}.zip">Download all images (.zip)</a>
+{{end}}
 `
 
 	t, err := template.New("page").Parse(tpl)
@@ -249,6 +251,7 @@ func makeAlbumPageHTML(totalPages, totalImages, page int,
 		TotalImages int
 		PreviousURL string
 		NextURL     string
+		IncludeZip  bool
 	}{
 		Name:        name,
 		GalleryName: galleryName,
@@ -258,6 +261,7 @@ func makeAlbumPageHTML(totalPages, totalImages, page int,
 		TotalImages: totalImages,
 		PreviousURL: previousURL,
 		NextURL:     nextURL,
+		IncludeZip:  includeZip,
 	}
 
 	err = t.Execute(fh, data)

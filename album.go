@@ -48,6 +48,9 @@ type Album struct {
 	// Whether to log verbosely.
 	Verbose bool
 
+	// Whether to generate/link zip of images.
+	IncludeZip bool
+
 	// Force generation of images (e.g. thumbs) even if they exist.
 	ForceGenerateImages bool
 
@@ -104,9 +107,11 @@ func (a *Album) Install() error {
 		return fmt.Errorf("unable to install images: %s", err)
 	}
 
-	err = a.makeZip()
-	if err != nil {
-		return fmt.Errorf("unable to create zip file: %s", err)
+	if a.IncludeZip {
+		err = a.makeZip()
+		if err != nil {
+			return fmt.Errorf("unable to create zip file: %s", err)
+		}
 	}
 
 	return nil
@@ -447,7 +452,7 @@ func (a *Album) GenerateHTML() error {
 		if len(htmlImages) == a.PageSize {
 			err := makeAlbumPageHTML(totalPages, len(a.chosenImages), page,
 				htmlImages, a.InstallDir, a.Name, a.GalleryName, a.Verbose,
-				a.ForceGenerateHTML)
+				a.ForceGenerateHTML, a.IncludeZip)
 			if err != nil {
 				return fmt.Errorf("unable to generate album page HTML: %s", err)
 			}
@@ -465,7 +470,8 @@ func (a *Album) GenerateHTML() error {
 
 	if len(htmlImages) > 0 {
 		err := makeAlbumPageHTML(totalPages, len(a.chosenImages), page, htmlImages,
-			a.InstallDir, a.Name, a.GalleryName, a.Verbose, a.ForceGenerateHTML)
+			a.InstallDir, a.Name, a.GalleryName, a.Verbose, a.ForceGenerateHTML,
+			a.IncludeZip)
 		if err != nil {
 			return fmt.Errorf("unable to generate/write HTML: %s", err)
 		}
