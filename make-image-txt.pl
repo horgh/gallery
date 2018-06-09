@@ -1,14 +1,22 @@
+#!/usr/bin/env perl
+#
 # Create images.txt for the given directory.
+
 use strict;
 use warnings;
 
 sub main {
-	if (@ARGV != 1) {
-		print { \*STDERR } "Usage: $0 <directory>\n" or die $!;
+	if (@ARGV != 1 && @ARGV != 2) {
+		print { \*STDERR } "Usage: $0 <directory> [initial description]\n" or die $!;
+		print { \*STDERR } "\n" or die $!;
+		print { \*STDERR } "  Initial description gets given to every image.\n";
+		print { \*STDERR } "  Blank is okay.\n";
+		print { \*STDERR } "\n" or die $!;
 		return 0;
 	}
 
 	my $dir = $ARGV[0];
+	my $description = $ARGV[1];
 
 	my $dh;
 	opendir $dh, $dir or die $!;
@@ -28,7 +36,11 @@ sub main {
 	open $fh, '>', "$dir/images.txt" or die $!;
 
 	foreach my $filename (@sorted_filenames) {
-		print { $fh } "$filename\n\n" or die $!;
+		if (!$description) {
+			print { $fh } "$filename\n\n" or die $!;
+		} else {
+			print { $fh } "$filename\n$description\n\n" or die $!;
+		}
 	}
 
 	close $fh or die $!;
@@ -39,4 +51,3 @@ sub main {
 }
 
 exit(main() ? 0 : 1);
-
