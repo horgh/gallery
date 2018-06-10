@@ -35,6 +35,9 @@ type Gallery struct {
 	// Whether to generate/link zips of images.
 	IncludeZips bool
 
+	// See description of this option in Album.
+	IncludeOriginals bool
+
 	// Force generation of images (e.g. thumbs) even if they exist.
 	ForceGenerateImages bool
 
@@ -224,6 +227,7 @@ func (g *Gallery) loadAlbum(name, dir, subDir, file, tags string) error {
 		Workers:             g.Workers,
 		Verbose:             g.Verbose,
 		IncludeZip:          g.IncludeZips,
+		IncludeOriginals:    g.IncludeOriginals,
 		ForceGenerateImages: g.ForceGenerateImages,
 		ForceGenerateHTML:   g.ForceGenerateHTML,
 		ForceGenerateZip:    g.ForceGenerateZip,

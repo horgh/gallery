@@ -51,6 +51,12 @@ type Album struct {
 	// Whether to generate/link zip of images.
 	IncludeZip bool
 
+	// If true, we copy over the original images and link to each from the "large"
+	// image (the single image pages).
+	//
+	// If false, we don't, and the large image is not a link.
+	IncludeOriginals bool
+
 	// Force generation of images (e.g. thumbs) even if they exist.
 	ForceGenerateImages bool
 
@@ -102,9 +108,10 @@ func (a *Album) Install() error {
 		return fmt.Errorf("problem generating HTML: %s", err)
 	}
 
-	err = a.InstallImages()
-	if err != nil {
-		return fmt.Errorf("unable to install images: %s", err)
+	if a.IncludeOriginals {
+		if err := a.InstallOriginalImages(); err != nil {
+			return fmt.Errorf("unable to install original images: %s", err)
+		}
 	}
 
 	if a.IncludeZip {
@@ -320,10 +327,8 @@ func (a *Album) GenerateImages() error {
 	return nil
 }
 
-// InstallImages copies the chosen images into the install directory.
-//
-// The only images that may not be there yet are the original images.
-func (a *Album) InstallImages() error {
+// InstallOriginalImages copies the chosen images into the install directory.
+func (a *Album) InstallOriginalImages() error {
 	for _, image := range a.chosenImages {
 		origTarget := path.Join(a.InstallDir, image.Filename)
 
@@ -440,6 +445,7 @@ func (a *Album) GenerateHTML() error {
 
 	for i, image := range a.chosenImages {
 		htmlImage := HTMLImage{
+			IncludeOriginals: a.IncludeOriginals,
 			OriginalImageURL: image.Filename,
 			ThumbImageURL:    image.ThumbnailFilename,
 			FullImageURL:     image.LargeImageFilename,

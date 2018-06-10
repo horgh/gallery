@@ -30,6 +30,9 @@ type Args struct {
 	// Whether to generate/link zips of images.
 	IncludeZips bool
 
+	// See description of this option in Album.
+	IncludeOriginals bool
+
 	// Force generation of images (e.g. thumbs) even if they exist.
 	ForceGenerateImages bool
 
@@ -63,6 +66,7 @@ func main() {
 		Name:                args.Name,
 		Verbose:             args.Verbose,
 		IncludeZips:         args.IncludeZips,
+		IncludeOriginals:    args.IncludeOriginals,
 		ForceGenerateImages: args.ForceGenerateImages,
 		ForceGenerateHTML:   args.ForceGenerateHTML,
 		ForceGenerateZip:    args.ForceGenerateZip,
@@ -82,6 +86,7 @@ func getArgs() (*Args, error) {
 	title := flag.String("title", "Gallery", "Name/title of the gallery.")
 	verbose := flag.Bool("verbose", false, "Toggle verbose logging.")
 	includeZips := flag.Bool("include-zips", false, "Generate and link zip files containing images.")
+	includeOriginals := flag.Bool("include-originals", true, "Copy original images and link to them from the single image page")
 	pageSize := flag.Int("page-size", 50, "Number of image thumbnails per page in albums.")
 	forceGenerateImages := flag.Bool("generate-images", false, "Force regenerating resized images. Normally we only do so if they don't exist.")
 	forceGenerateHTML := flag.Bool("generate-html", false, "Force regenerating HTML. Normally we only do so if it does not exist.")
@@ -108,6 +113,7 @@ func getArgs() (*Args, error) {
 		Name:                *title,
 		Verbose:             *verbose,
 		IncludeZips:         *includeZips,
+		IncludeOriginals:    *includeOriginals,
 		PageSize:            *pageSize,
 		ForceGenerateImages: *forceGenerateImages,
 		ForceGenerateHTML:   *forceGenerateHTML,

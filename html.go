@@ -10,6 +10,7 @@ import (
 
 // HTMLImage holds image info needed in HTML.
 type HTMLImage struct {
+	IncludeOriginals bool
 	OriginalImageURL string
 	FullImageURL     string
 	ThumbImageURL    string
@@ -354,9 +355,13 @@ document.addEventListener('DOMContentLoaded', function() {
 </div>
 
 <div class="image-large">
-	<a href="{{.OriginalImageURL}}">
+	{{if .IncludeOriginals}}
+		<a href="{{.OriginalImageURL}}">
+			<img src="{{.FullImageURL}}">
+		</a>
+	{{else}}
 		<img src="{{.FullImageURL}}">
-	</a>
+	{{end}}
 
 	{{if .Description}}
 		<p>{{.Description}}</p>
@@ -388,6 +393,7 @@ document.addEventListener('DOMContentLoaded', function() {
 		ImageName        string
 		AlbumName        string
 		GalleryName      string
+		IncludeOriginals bool
 		OriginalImageURL string
 		FullImageURL     string
 		Description      string
@@ -397,6 +403,7 @@ document.addEventListener('DOMContentLoaded', function() {
 		ImageName:        image.OriginalImageURL,
 		AlbumName:        albumName,
 		GalleryName:      galleryName,
+		IncludeOriginals: image.IncludeOriginals,
 		OriginalImageURL: image.OriginalImageURL,
 		FullImageURL:     image.FullImageURL,
 		Description:      image.Description,
