@@ -1,2 +1,0 @@
-- Link back to correct page when clicking "back" link on single image page.
-  - Right now it goes to page 1.

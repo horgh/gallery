@@ -287,8 +287,16 @@ func makeAlbumPageHTML(totalPages, totalImages, page int,
 // This page shows the larger size of the image. We link to the original image.
 //
 // galleryName is optional. It may be we are creating a standalone album.
-func makeImagePageHTML(image HTMLImage, dir string, totalImages int,
-	albumName, galleryName string, verbose, forceGenerate bool) error {
+func makeImagePageHTML(
+	image HTMLImage,
+	dir string,
+	totalImages int,
+	albumName,
+	galleryName string,
+	verbose,
+	forceGenerate bool,
+	page int,
+) error {
 	htmlPath := path.Join(dir, fmt.Sprintf("image-%d.html", image.Index))
 	exists, err := fileExists(htmlPath)
 	if err != nil {
@@ -339,7 +347,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 <div id="nav">
 	Navigation:
-	<a href="index.html">Back to {{.AlbumName}}</a>
+	<a href="{{.BackURL}}">Back to {{.AlbumName}}</a>
 
 	{{if .PreviousURL}}
 		| <a href="{{.PreviousURL}}">Previous image</a>
@@ -379,6 +387,11 @@ document.addEventListener('DOMContentLoaded', function() {
 		return fmt.Errorf("unable to open HTML file: %s", err)
 	}
 
+	backURL := "index.html"
+	if page > 1 {
+		backURL = fmt.Sprintf("page-%d.html", page)
+	}
+
 	nextURL := ""
 	if image.Index < totalImages-1 {
 		nextURL = fmt.Sprintf("image-%d.html", image.Index+1)
@@ -397,6 +410,7 @@ document.addEventListener('DOMContentLoaded', function() {
 		OriginalImageURL string
 		FullImageURL     string
 		Description      string
+		BackURL          string
 		NextURL          string
 		PreviousURL      string
 	}{
@@ -407,6 +421,7 @@ document.addEventListener('DOMContentLoaded', function() {
 		OriginalImageURL: image.OriginalImageURL,
 		FullImageURL:     image.FullImageURL,
 		Description:      image.Description,
+		BackURL:          backURL,
 		NextURL:          nextURL,
 		PreviousURL:      previousURL,
 	}
