@@ -32,11 +32,11 @@ type Album struct {
 	// not building a gallery with multiple albums, then we don't use this field.
 	InstallSubDir string
 
-	// Image thumbnail size. Width. Pixels.
+	// The thumbnail size in pixels. Width and height are the same.
 	ThumbnailSize int
 
-	// Image size. Width. Pixels. This is an image larger than the thumbnail but
-	// still likely smaller than the original.
+	// The size of the larger version of images (if the original image is larger
+	// than this) in pixels. This is the pixel size set of the longest side.
 	LargeImageSize int
 
 	// How many images per page.

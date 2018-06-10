@@ -47,6 +47,12 @@ type Args struct {
 
 	// Number of workers to use when resizing images.
 	Workers int
+
+	// See definition in Album.
+	ThumbnailSize int
+
+	// See definition in Album.
+	LargeImageSize int
 }
 
 func main() {
@@ -72,6 +78,8 @@ func main() {
 		ForceGenerateZip:    args.ForceGenerateZip,
 		PageSize:            args.PageSize,
 		Workers:             args.Workers,
+		ThumbnailSize:       args.ThumbnailSize,
+		LargeImageSize:      args.LargeImageSize,
 	}
 
 	err = gallery.Install()
@@ -92,6 +100,8 @@ func getArgs() (*Args, error) {
 	forceGenerateHTML := flag.Bool("generate-html", false, "Force regenerating HTML. Normally we only do so if it does not exist.")
 	forceGenerateZip := flag.Bool("generate-zip", false, "Force regenerating zip files. Normally we only do so if they do not exist.")
 	workers := flag.Int("workers", 4, "Number of workers for image resizing.")
+	thumbnailSize := flag.Int("thumbnail-size", 100, "Thumbnail size. Width and height will be the same.")
+	largeImageSize := flag.Int("large-image-size", 595, "Larger version of the image. This defines the size of the largest side.")
 
 	flag.Parse()
 
@@ -119,5 +129,7 @@ func getArgs() (*Args, error) {
 		ForceGenerateHTML:   *forceGenerateHTML,
 		ForceGenerateZip:    *forceGenerateZip,
 		Workers:             *workers,
+		ThumbnailSize:       *thumbnailSize,
+		LargeImageSize:      *largeImageSize,
 	}, nil
 }

@@ -8,15 +8,6 @@ import (
 	"strings"
 )
 
-// ThumbnailSize defines the thumbnail size in pixels. Width and height are the
-// same.
-const ThumbnailSize = 100
-
-// LargeImageSize defines the size of the larger version of images (if the
-// original image is larger than this) in pixels. This is the pixel size set of
-// their longest side.
-const LargeImageSize = 595
-
 // Gallery holds information about a full gallery site which contains 1 or
 // more albums of images.
 type Gallery struct {
@@ -52,6 +43,12 @@ type Gallery struct {
 
 	// Number of workers to use in resizing images.
 	Workers int
+
+	// See definition in Album.
+	ThumbnailSize int
+
+	// See definition in Album.
+	LargeImageSize int
 
 	// Albums in the gallery.
 	albums []*Album
@@ -221,8 +218,8 @@ func (g *Gallery) loadAlbum(name, dir, subDir, file, tags string) error {
 		OrigImageDir:        dir,
 		InstallDir:          path.Join(g.InstallDir, subDir),
 		InstallSubDir:       subDir,
-		ThumbnailSize:       ThumbnailSize,
-		LargeImageSize:      LargeImageSize,
+		ThumbnailSize:       g.ThumbnailSize,
+		LargeImageSize:      g.LargeImageSize,
 		PageSize:            g.PageSize,
 		Workers:             g.Workers,
 		Verbose:             g.Verbose,
