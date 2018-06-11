@@ -67,6 +67,10 @@ body {
 	display: inline-block;
 }
 
+img {
+	max-width: 100%;
+}
+
 @media all and (max-width: 600px) {
   #images {
     margin: 0 0 15px 0;
