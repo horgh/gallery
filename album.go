@@ -215,9 +215,9 @@ func ParseAlbumFile(file string) ([]*Image, error) {
 		})
 	}
 
-	if scanner.Err() != nil {
+	if err := scanner.Err(); err != nil {
 		_ = fh.Close()
-		return nil, fmt.Errorf("scan failure: %s", scanner.Err())
+		return nil, fmt.Errorf("scan failure: %s", err)
 	}
 
 	err = fh.Close()
