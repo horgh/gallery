@@ -62,8 +62,7 @@ func (i Image) hasTag(tag string) bool {
 
 // Generate all images from the original, if necessary.
 func (i *Image) makeImages(dir string, verbose, forceGenerate bool) error {
-	err := i.makeThumbnail(dir, verbose, forceGenerate)
-	if err != nil {
+	if err := i.makeThumbnail(dir, verbose, forceGenerate); err != nil {
 		return err
 	}
 
@@ -81,8 +80,7 @@ func (i *Image) makeThumbnail(dir string, verbose, forceGenerate bool) error {
 
 	if !forceGenerate {
 		// If the resized version exists, nothing to do.
-		_, err = os.Stat(resizeFile)
-		if err == nil {
+		if _, err = os.Stat(resizeFile); err == nil {
 			i.ThumbnailPath = resizeFile
 			i.ThumbnailFilename = path.Base(resizeFile)
 			return nil
@@ -102,22 +100,19 @@ func (i *Image) makeThumbnail(dir string, verbose, forceGenerate bool) error {
 		return fmt.Errorf("unable to open image: %s: %s", i.Filename, err)
 	}
 
-	err = image.AutoOrient()
-	if err != nil {
+	if err := image.AutoOrient(); err != nil {
 		_ = image.Destroy()
 		return fmt.Errorf("unable to auto orient: %s: %s", i.Filename, err)
 	}
 
 	// Resize.
 	if image.Width() > image.Height() {
-		err := image.Resize(fmt.Sprintf("x%d", i.ThumbnailSize))
-		if err != nil {
+		if err := image.Resize(fmt.Sprintf("x%d", i.ThumbnailSize)); err != nil {
 			_ = image.Destroy()
 			return fmt.Errorf("unable to resize image: %s: %s", i.Filename, err)
 		}
 	} else {
-		err := image.Resize(fmt.Sprintf("%dx", i.ThumbnailSize))
-		if err != nil {
+		if err := image.Resize(fmt.Sprintf("%dx", i.ThumbnailSize)); err != nil {
 			_ = image.Destroy()
 			return fmt.Errorf("unable to resize image: %s: %s", i.Filename, err)
 		}
@@ -139,22 +134,19 @@ func (i *Image) makeThumbnail(dir string, verbose, forceGenerate bool) error {
 	geometry := fmt.Sprintf("%dx%d!+%d+%d", i.ThumbnailSize, i.ThumbnailSize,
 		xOffset, yOffset)
 
-	err = image.Crop(geometry)
-	if err != nil {
+	if err := image.Crop(geometry); err != nil {
 		_ = image.Destroy()
 		return fmt.Errorf("unable to crop: %s: %s", i.Filename, err)
 	}
 
 	image.PlusRepage()
 
-	err = image.ToFile(resizeFile)
-	if err != nil {
+	if err := image.ToFile(resizeFile); err != nil {
 		_ = image.Destroy()
 		return fmt.Errorf("unable to save resized image: %s: %s", resizeFile, err)
 	}
 
-	err = image.Destroy()
-	if err != nil {
+	if err := image.Destroy(); err != nil {
 		return fmt.Errorf("unable to clean up: %s", err)
 	}
 
@@ -174,8 +166,7 @@ func (i *Image) makeLargeImage(dir string, verbose, forceGenerate bool) error {
 
 	if !forceGenerate {
 		// If the resized version exists, nothing to do.
-		_, err = os.Stat(resizeFile)
-		if err == nil {
+		if _, err = os.Stat(resizeFile); err == nil {
 			i.LargeImagePath = resizeFile
 			i.LargeImageFilename = path.Base(resizeFile)
 			return nil
@@ -195,8 +186,7 @@ func (i *Image) makeLargeImage(dir string, verbose, forceGenerate bool) error {
 		return fmt.Errorf("unable to open image: %s: %s", i.Filename, err)
 	}
 
-	err = image.AutoOrient()
-	if err != nil {
+	if err := image.AutoOrient(); err != nil {
 		_ = image.Destroy()
 		return fmt.Errorf("unable to auto orient: %s: %s", i.Filename, err)
 	}
@@ -204,28 +194,24 @@ func (i *Image) makeLargeImage(dir string, verbose, forceGenerate bool) error {
 	// May not need to resize.
 	if image.Width() > i.LargeImageSize || image.Height() > i.LargeImageSize {
 		if image.Width() > image.Height() {
-			err := image.Resize(fmt.Sprintf("%dx", i.LargeImageSize))
-			if err != nil {
+			if err := image.Resize(fmt.Sprintf("%dx", i.LargeImageSize)); err != nil {
 				_ = image.Destroy()
 				return fmt.Errorf("unable to resize image: %s: %s", i.Filename, err)
 			}
 		} else {
-			err := image.Resize(fmt.Sprintf("x%d", i.LargeImageSize))
-			if err != nil {
+			if err := image.Resize(fmt.Sprintf("x%d", i.LargeImageSize)); err != nil {
 				_ = image.Destroy()
 				return fmt.Errorf("unable to resize image: %s: %s", i.Filename, err)
 			}
 		}
 	}
 
-	err = image.ToFile(resizeFile)
-	if err != nil {
+	if err := image.ToFile(resizeFile); err != nil {
 		_ = image.Destroy()
 		return fmt.Errorf("unable to save resized image: %s: %s", resizeFile, err)
 	}
 
-	err = image.Destroy()
-	if err != nil {
+	if err := image.Destroy(); err != nil {
 		return fmt.Errorf("unable to clean up: %s", err)
 	}
 
