@@ -92,8 +92,7 @@ func makeGalleryHTML(installDir, name string, albums []HTMLAlbum,
 		return nil
 	}
 
-	err = makeDirIfNotExist(installDir)
-	if err != nil {
+	if err := makeDirIfNotExist(installDir); err != nil {
 		return err
 	}
 
@@ -132,14 +131,12 @@ func makeGalleryHTML(installDir, name string, albums []HTMLAlbum,
 		Albums: albums,
 	}
 
-	err = t.Execute(fh, data)
-	if err != nil {
+	if err := t.Execute(fh, data); err != nil {
 		_ = fh.Close()
 		return fmt.Errorf("unable to execute template: %s", err)
 	}
 
-	err = fh.Close()
-	if err != nil {
+	if err := fh.Close(); err != nil {
 		return fmt.Errorf("close: %s", err)
 	}
 
@@ -269,14 +266,12 @@ func makeAlbumPageHTML(totalPages, totalImages, page int,
 		IncludeZip:  includeZip,
 	}
 
-	err = t.Execute(fh, data)
-	if err != nil {
+	if err := t.Execute(fh, data); err != nil {
 		_ = fh.Close()
 		return fmt.Errorf("unable to execute template: %s", err)
 	}
 
-	err = fh.Close()
-	if err != nil {
+	if err := fh.Close(); err != nil {
 		return fmt.Errorf("close: %s", err)
 	}
 
@@ -430,14 +425,12 @@ document.addEventListener('DOMContentLoaded', function() {
 		PreviousURL:      previousURL,
 	}
 
-	err = t.Execute(fh, data)
-	if err != nil {
+	if err := t.Execute(fh, data); err != nil {
 		_ = fh.Close()
 		return fmt.Errorf("unable to execute template: %s", err)
 	}
 
-	err = fh.Close()
-	if err != nil {
+	if err := fh.Close(); err != nil {
 		return fmt.Errorf("close: %s", err)
 	}
 
