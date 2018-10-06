@@ -23,20 +23,17 @@ func copyFile(src string, dest string) error {
 		return fmt.Errorf("unable to open file (write): %s", err)
 	}
 
-	_, err = io.Copy(destFD, srcFD)
-	if err != nil {
+	if _, err := io.Copy(destFD, srcFD); err != nil {
 		_ = srcFD.Close()
 		_ = destFD.Close()
 		return fmt.Errorf("unable to copy file: %s", err)
 	}
 
-	err = srcFD.Close()
-	if err != nil {
+	if err := srcFD.Close(); err != nil {
 		return fmt.Errorf("close: %s: %s", src, err)
 	}
 
-	err = destFD.Close()
-	if err != nil {
+	if err := destFD.Close(); err != nil {
 		return fmt.Errorf("close: %s: %s", dest, err)
 	}
 
@@ -50,8 +47,7 @@ func makeDirIfNotExist(dir string) error {
 			return fmt.Errorf("%s: %s", dir, err)
 		}
 
-		err := os.Mkdir(dir, 0755)
-		if err != nil {
+		if err := os.Mkdir(dir, 0755); err != nil {
 			return fmt.Errorf("mkdir: %s: %s", dir, err)
 		}
 
