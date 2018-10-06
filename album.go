@@ -306,7 +306,8 @@ func (a *Album) GenerateImages() error {
 					a.Verbose,
 					a.ForceGenerateImages,
 				); err != nil {
-					log.Printf("Problem making images: %s", err)
+					log.Printf("Error creating images for %s: %s", image.Filename, err)
+					// Continue to process other images.
 				}
 			}
 		}()
