@@ -418,8 +418,7 @@ func (a *Album) getZipPath() string {
 //
 // Split over several pages if necessary.
 func (a *Album) GenerateHTML() error {
-	err := makeDirIfNotExist(a.InstallDir)
-	if err != nil {
+	if err := makeDirIfNotExist(a.InstallDir); err != nil {
 		return err
 	}
 
@@ -442,19 +441,17 @@ func (a *Album) GenerateHTML() error {
 			Index:            i,
 		}
 
-		err := makeImagePageHTML(htmlImage, a.InstallDir, len(a.chosenImages),
-			a.Name, a.GalleryName, a.Verbose, a.ForceGenerateHTML, page)
-		if err != nil {
+		if err := makeImagePageHTML(htmlImage, a.InstallDir, len(a.chosenImages),
+			a.Name, a.GalleryName, a.Verbose, a.ForceGenerateHTML, page); err != nil {
 			return fmt.Errorf("unable to generate image page HTML: %s", err)
 		}
 
 		htmlImages = append(htmlImages, htmlImage)
 
 		if len(htmlImages) == a.PageSize {
-			err := makeAlbumPageHTML(totalPages, len(a.chosenImages), page,
+			if err := makeAlbumPageHTML(totalPages, len(a.chosenImages), page,
 				htmlImages, a.InstallDir, a.Name, a.GalleryName, a.Verbose,
-				a.ForceGenerateHTML, a.IncludeZip)
-			if err != nil {
+				a.ForceGenerateHTML, a.IncludeZip); err != nil {
 				return fmt.Errorf("unable to generate album page HTML: %s", err)
 			}
 
@@ -464,10 +461,9 @@ func (a *Album) GenerateHTML() error {
 	}
 
 	if len(htmlImages) > 0 {
-		err := makeAlbumPageHTML(totalPages, len(a.chosenImages), page, htmlImages,
+		if err := makeAlbumPageHTML(totalPages, len(a.chosenImages), page, htmlImages,
 			a.InstallDir, a.Name, a.GalleryName, a.Verbose, a.ForceGenerateHTML,
-			a.IncludeZip)
-		if err != nil {
+			a.IncludeZip); err != nil {
 			return fmt.Errorf("unable to generate/write HTML: %s", err)
 		}
 	}
