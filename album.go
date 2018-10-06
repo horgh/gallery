@@ -88,23 +88,19 @@ type Album struct {
 // Install loads image information, and then chooses, resizes, builds HTML, and
 // installs the HTML and images.
 func (a *Album) Install() error {
-	err := a.load()
-	if err != nil {
+	if err := a.load(); err != nil {
 		return fmt.Errorf("unable to parse metadata file: %s", err)
 	}
 
-	err = a.ChooseImages()
-	if err != nil {
+	if err := a.ChooseImages(); err != nil {
 		return fmt.Errorf("unable to choose images: %s", err)
 	}
 
-	err = a.GenerateImages()
-	if err != nil {
+	if err := a.GenerateImages(); err != nil {
 		return fmt.Errorf("problem generating images: %s", err)
 	}
 
-	err = a.GenerateHTML()
-	if err != nil {
+	if err := a.GenerateHTML(); err != nil {
 		return fmt.Errorf("problem generating HTML: %s", err)
 	}
 
@@ -115,8 +111,7 @@ func (a *Album) Install() error {
 	}
 
 	if a.IncludeZip {
-		err = a.makeZip()
-		if err != nil {
+		if err := a.makeZip(); err != nil {
 			return fmt.Errorf("unable to create zip file: %s", err)
 		}
 	}
@@ -293,8 +288,7 @@ func (a *Album) ChooseImages() error {
 //
 // We only look at chosen images.
 func (a *Album) GenerateImages() error {
-	err := makeDirIfNotExist(a.InstallDir)
-	if err != nil {
+	if err := makeDirIfNotExist(a.InstallDir); err != nil {
 		return err
 	}
 
@@ -333,8 +327,7 @@ func (a *Album) InstallOriginalImages() error {
 		origTarget := path.Join(a.InstallDir, image.Filename)
 
 		// It may be there already.
-		_, err := os.Stat(origTarget)
-		if err == nil {
+		if _, err := os.Stat(origTarget); err == nil {
 			continue
 		}
 
