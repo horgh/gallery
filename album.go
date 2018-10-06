@@ -296,8 +296,8 @@ func (a *Album) GenerateImages() error {
 	wg := sync.WaitGroup{}
 
 	for i := 0; i < a.Workers; i++ {
-		go func(id int) {
-			wg.Add(1)
+		wg.Add(1)
+		go func() {
 			defer wg.Done()
 
 			for image := range ch {
@@ -309,7 +309,7 @@ func (a *Album) GenerateImages() error {
 					log.Printf("Problem making images: %s", err)
 				}
 			}
-		}(i)
+		}()
 	}
 
 	for _, image := range a.chosenImages {
