@@ -220,8 +220,7 @@ func ParseAlbumFile(file string) ([]*Image, error) {
 		return nil, fmt.Errorf("scan failure: %s", err)
 	}
 
-	err = fh.Close()
-	if err != nil {
+	if err := fh.Close(); err != nil {
 		return nil, fmt.Errorf("close: %s", err)
 	}
 
@@ -302,8 +301,11 @@ func (a *Album) GenerateImages() error {
 			defer wg.Done()
 
 			for image := range ch {
-				err := image.makeImages(a.InstallDir, a.Verbose, a.ForceGenerateImages)
-				if err != nil {
+				if err := image.makeImages(
+					a.InstallDir,
+					a.Verbose,
+					a.ForceGenerateImages,
+				); err != nil {
 					log.Printf("Problem making images: %s", err)
 				}
 			}
@@ -331,8 +333,7 @@ func (a *Album) InstallOriginalImages() error {
 			continue
 		}
 
-		err = copyFile(image.Path, origTarget)
-		if err != nil {
+		if err := copyFile(image.Path, origTarget); err != nil {
 			return fmt.Errorf("unable to copy %s to %s: %s", image.Path, origTarget,
 				err)
 		}
@@ -347,8 +348,7 @@ func (a *Album) makeZip() error {
 
 	// Don't create it if it is there already.
 	if !a.ForceGenerateZip {
-		_, err := os.Stat(zipPath)
-		if err == nil {
+		if _, err := os.Stat(zipPath); err == nil {
 			return nil
 		}
 	}
@@ -380,30 +380,26 @@ func (a *Album) makeZip() error {
 			return err
 		}
 
-		_, err = io.Copy(zipFileFH, imageFH)
-		if err != nil {
+		if _, err := io.Copy(zipFileFH, imageFH); err != nil {
 			_ = zipFH.Close()
 			_ = zipWriter.Close()
 			_ = imageFH.Close()
 			return err
 		}
 
-		err = imageFH.Close()
-		if err != nil {
+		if err := imageFH.Close(); err != nil {
 			_ = zipFH.Close()
 			_ = zipWriter.Close()
 			return err
 		}
 	}
 
-	err = zipWriter.Close()
-	if err != nil {
+	if err := zipWriter.Close(); err != nil {
 		_ = zipFH.Close()
 		return err
 	}
 
-	err = zipFH.Close()
-	if err != nil {
+	if err := zipFH.Close(); err != nil {
 		return err
 	}
 
