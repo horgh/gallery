@@ -23,8 +23,11 @@ sub main {
 
 	my @filenames;
 	while (my $filename = readdir $dh) {
-		next if $filename eq '..' || $filename eq '.' || $filename =~ /\.MOV$/ ||
-			$filename eq 'images.txt';
+		next if $filename eq '..' || $filename eq '.' ||
+			$filename =~ /\.MOV$/i ||
+			$filename eq 'images.txt' ||
+			$filename =~ /\.mp4$/i ||
+			$filename =~ /\.heic$/i;
 		push @filenames, $filename;
 	}
 
