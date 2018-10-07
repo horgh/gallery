@@ -227,18 +227,20 @@ func (i Image) getResizedFilename(dir string, width,
 
 	namePieces := strings.Split(i.Filename, ".")
 
-	if len(namePieces) != 2 {
+	if len(namePieces) < 2 {
 		return "", fmt.Errorf("unexpected filename format")
 	}
+
+	prefix := strings.Join(namePieces[:len(namePieces)-1], ".")
+	suffix := namePieces[len(namePieces)-1]
 
 	// -1 if the width/height is auto. Width/height will be width depending on
 	// which is larger.
 	newName := ""
 	if height != -1 {
-		newName = fmt.Sprintf("%s_%d_%d.%s", namePieces[0], width, height,
-			namePieces[1])
+		newName = fmt.Sprintf("%s_%d_%d.%s", prefix, width, height, suffix)
 	} else {
-		newName = fmt.Sprintf("%s_%d.%s", namePieces[0], width, namePieces[1])
+		newName = fmt.Sprintf("%s_%d.%s", prefix, width, suffix)
 	}
 
 	return path.Join(dir, newName), nil
