@@ -4,7 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
-	"path"
+	"path/filepath"
 	"strings"
 )
 
@@ -216,7 +216,7 @@ func (g *Gallery) loadAlbum(name, dir, subDir, file, tags string) error {
 		Name:                name,
 		File:                file,
 		OrigImageDir:        dir,
-		InstallDir:          path.Join(g.InstallDir, subDir),
+		InstallDir:          filepath.Join(g.InstallDir, subDir),
 		InstallSubDir:       subDir,
 		ThumbnailSize:       g.ThumbnailSize,
 		LargeImageSize:      g.LargeImageSize,

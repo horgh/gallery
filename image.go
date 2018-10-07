@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"path"
+	"path/filepath"
 	"strings"
 
 	"github.com/horgh/magick"
@@ -82,7 +82,7 @@ func (i *Image) makeThumbnail(dir string, verbose, forceGenerate bool) error {
 		// If the resized version exists, nothing to do.
 		if _, err = os.Stat(resizeFile); err == nil {
 			i.ThumbnailPath = resizeFile
-			i.ThumbnailFilename = path.Base(resizeFile)
+			i.ThumbnailFilename = filepath.Base(resizeFile)
 			return nil
 		}
 
@@ -151,7 +151,7 @@ func (i *Image) makeThumbnail(dir string, verbose, forceGenerate bool) error {
 	}
 
 	i.ThumbnailPath = resizeFile
-	i.ThumbnailFilename = path.Base(resizeFile)
+	i.ThumbnailFilename = filepath.Base(resizeFile)
 
 	return nil
 }
@@ -168,7 +168,7 @@ func (i *Image) makeLargeImage(dir string, verbose, forceGenerate bool) error {
 		// If the resized version exists, nothing to do.
 		if _, err = os.Stat(resizeFile); err == nil {
 			i.LargeImagePath = resizeFile
-			i.LargeImageFilename = path.Base(resizeFile)
+			i.LargeImageFilename = filepath.Base(resizeFile)
 			return nil
 		}
 
@@ -216,7 +216,7 @@ func (i *Image) makeLargeImage(dir string, verbose, forceGenerate bool) error {
 	}
 
 	i.LargeImagePath = resizeFile
-	i.LargeImageFilename = path.Base(resizeFile)
+	i.LargeImageFilename = filepath.Base(resizeFile)
 
 	return nil
 }
@@ -243,5 +243,5 @@ func (i Image) getResizedFilename(dir string, width,
 		newName = fmt.Sprintf("%s_%d.%s", prefix, width, suffix)
 	}
 
-	return path.Join(dir, newName), nil
+	return filepath.Join(dir, newName), nil
 }

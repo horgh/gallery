@@ -5,7 +5,7 @@ import (
 	"html/template"
 	"log"
 	"os"
-	"path"
+	"path/filepath"
 )
 
 // HTMLImage holds image info needed in HTML.
@@ -82,7 +82,7 @@ img {
 // gallery. This is a single page that links to all albums.
 func makeGalleryHTML(installDir, name string, albums []HTMLAlbum,
 	verbose, forceGenerate bool) error {
-	htmlPath := path.Join(installDir, "index.html")
+	htmlPath := filepath.Join(installDir, "index.html")
 	exists, err := fileExists(htmlPath)
 	if err != nil {
 		return fmt.Errorf("failed to check if HTML exists: %s: %s", htmlPath, err)
@@ -161,7 +161,7 @@ func makeAlbumPageHTML(totalPages, totalImages, page int,
 		filename = fmt.Sprintf("page-%d.html", page)
 	}
 
-	htmlPath := path.Join(installDir, filename)
+	htmlPath := filepath.Join(installDir, filename)
 	exists, err := fileExists(htmlPath)
 	if err != nil {
 		return fmt.Errorf("failed to check if HTML exists: %s: %s", htmlPath, err)
@@ -296,7 +296,7 @@ func makeImagePageHTML(
 	forceGenerate bool,
 	page int,
 ) error {
-	htmlPath := path.Join(dir, fmt.Sprintf("image-%d.html", image.Index))
+	htmlPath := filepath.Join(dir, fmt.Sprintf("image-%d.html", image.Index))
 	exists, err := fileExists(htmlPath)
 	if err != nil {
 		return fmt.Errorf("failed to check if HTML exists: %s: %s", htmlPath, err)

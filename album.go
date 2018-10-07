@@ -8,7 +8,7 @@ import (
 	"log"
 	"math/rand"
 	"os"
-	"path"
+	"path/filepath"
 	"strings"
 	"sync"
 )
@@ -241,7 +241,7 @@ func (a *Album) load() error {
 	}
 
 	for _, image := range images {
-		image.Path = path.Join(a.OrigImageDir, image.Filename)
+		image.Path = filepath.Join(a.OrigImageDir, image.Filename)
 		image.ThumbnailSize = a.ThumbnailSize
 		image.LargeImageSize = a.LargeImageSize
 	}
@@ -327,7 +327,7 @@ func (a *Album) GenerateImages() error {
 // InstallOriginalImages copies the chosen images into the install directory.
 func (a *Album) InstallOriginalImages() error {
 	for _, image := range a.chosenImages {
-		origTarget := path.Join(a.InstallDir, image.Filename)
+		origTarget := filepath.Join(a.InstallDir, image.Filename)
 
 		// It may be there already.
 		if _, err := os.Stat(origTarget); err == nil {
@@ -412,7 +412,7 @@ func (a *Album) makeZip() error {
 }
 
 func (a *Album) getZipPath() string {
-	return path.Join(a.InstallDir, fmt.Sprintf("%s.zip", a.Name))
+	return filepath.Join(a.InstallDir, fmt.Sprintf("%s.zip", a.Name))
 }
 
 // GenerateHTML does just that!
